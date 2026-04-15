@@ -32,9 +32,7 @@ The other repos are config only:
 
 ## Usage
 
-::tabs
-
-:::tab Arch / Ubuntu
+### Arch / Ubuntu
 
 ```bash
 git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
@@ -50,18 +48,12 @@ cd ~/.dotfiles.bootstrap
 --help, -h           Show this help message
 ```
 
-:::
-
-:::tab NixOS
+### NixOS
 
 Bootstrap is not used for NixOS. Setup and rebuilds are driven directly from
 [dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
 and `nixos-rebuild switch`. See the dotfiles.nix README for the full installation
 guide.
-
-:::
-
-::endtabs
 
 ## Repository layout
 
