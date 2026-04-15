@@ -600,7 +600,7 @@ function _configure_rog() {
 }
 
 function _configure_xps_13_9350() {
-    local firmware_src="${CORE_DIR}/system_components/xps_13_9350/bluetooth/BCM4350C5_003.006.007.0095.1703.hcd"
+    local firmware_src="${SCRIPT_DIR}/core/system_components/xps_13_9350/bluetooth/BCM4350C5_003.006.007.0095.1703.hcd"
     local firmware_dst="/lib/firmware/brcm/BCM4350C5-0a5c-6412.hcd"
 
     print_info "Installing Bluetooth firmware for XPS 13 9350"
