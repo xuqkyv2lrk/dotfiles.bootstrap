@@ -23,14 +23,24 @@ function install_nix() {
     print_step "Installing NixOS configuration"
 
     _clone_nix
+
+    local nix_user
+    nix_user="$(_get_nix_user)"
+    if [[ -z "${nix_user}" ]]; then
+        print_error "Could not detect username from flake.nix"
+        print_info "Expected a 'home-manager.users.<user>' entry in flake.nix"
+        return 1
+    fi
+    print_info "Detected user: ${nix_user}"
+
     _copy_hardware_config "${hostname}"
 
     if ! _host_exists "${hostname}"; then
-        _scaffold_new_host "${hostname}" "${hardware}"
-        _add_flake_entry "${hostname}"
+        _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}"
+        _add_flake_entry "${hostname}" "${nix_user}"
     fi
 
-    _run_nixos_install "${hostname}"
+    _run_nixos_install "${hostname}" "${nix_user}"
 }
 
 function _clone_nix() {
@@ -56,14 +66,22 @@ function _host_exists() {
     [[ -n "$(grep "nixosConfigurations\.${hostname}" "${NIX_CLONE_DIR}/flake.nix" 2>/dev/null)" ]]
 }
 
+# _get_nix_user
+# Extracts the username from the home-manager.users.<user> entry in flake.nix.
+function _get_nix_user() {
+    grep -oP "home-manager\.users\.\K\w+" "${NIX_CLONE_DIR}/flake.nix" 2>/dev/null | head -1
+}
+
 # _scaffold_new_host
 # Generates a hosts/<hostname>/configuration.nix from the appropriate hardware profile.
 # Parameters:
 #   $1 - hostname
 #   $2 - hardware identifier
+#   $3 - username
 function _scaffold_new_host() {
     local hostname="${1}"
     local hardware="${2}"
+    local nix_user="${3}"
     local dest="${NIX_CLONE_DIR}/hosts/${hostname}/configuration.nix"
 
     local hardware_import=""
@@ -117,7 +135,7 @@ function _scaffold_new_host() {
         printf "  virtualisation.libvirtd.enable = true;\n"
         printf "  programs.virt-manager.enable = true;\n\n"
         printf "  nixpkgs.config.allowUnfree = true;\n\n"
-        printf "  users.users.lqnw3c = {\n"
+        printf "  users.users.%s = {\n" "${nix_user}"
         printf "    isNormalUser = true;\n"
         printf "    extraGroups  = [ \"wheel\" \"networkmanager\" \"video\" \"audio\" \"libvirtd\" ];\n"
         printf "    shell        = pkgs.zsh;\n"
@@ -147,8 +165,12 @@ function _scaffold_new_host() {
 
 # _add_flake_entry
 # Prints the flake entry for the new host and opens flake.nix for editing.
+# Parameters:
+#   $1 - hostname
+#   $2 - username
 function _add_flake_entry() {
     local hostname="${1}"
+    local nix_user="${2}"
 
     printf "\n"
     print_warning "New host detected — add this entry to flake.nix under nixosConfigurations:"
@@ -162,7 +184,7 @@ function _add_flake_entry() {
     printf "        {\n"
     printf "          home-manager.useGlobalPkgs    = true;\n"
     printf "          home-manager.useUserPackages  = true;\n"
-    printf "          home-manager.users.lqnw3c     = import ./home/lqnw3c.nix;\n"
+    printf "          home-manager.users.%s = import ./home/%s.nix;\n" "${nix_user}" "${nix_user}"
     printf "        }\n"
     printf "      ];\n"
     printf "    };\n"
@@ -171,18 +193,23 @@ function _add_flake_entry() {
     "${EDITOR:-nano}" "${NIX_CLONE_DIR}/flake.nix"
 }
 
+# _run_nixos_install
+# Parameters:
+#   $1 - hostname
+#   $2 - username
 function _run_nixos_install() {
     local hostname="${1}"
+    local nix_user="${2}"
 
     print_info "Running nixos-install"
     nixos-install --flake "${NIX_CLONE_DIR}#${hostname}"
 
-    # Preserve the repo (with any scaffolded or updated files) into the installed
-    # system so it survives the reboot and is ready to commit from.
-    local installed_home="/mnt/home/lqnw3c"
+    # Preserve the repo into the installed system so it survives the reboot
+    # and any scaffolded or updated files are ready to commit.
+    local installed_home="/mnt/home/${nix_user}"
     if [[ -d "${installed_home}" ]]; then
         cp -r "${NIX_CLONE_DIR}" "${installed_home}/.dotfiles.nix"
-        nixos-enter --root /mnt -- chown -R lqnw3c:users /home/lqnw3c/.dotfiles.nix
+        nixos-enter --root /mnt -- chown -R "${nix_user}:users" "/home/${nix_user}/.dotfiles.nix"
         print_success "dotfiles.nix copied to ${installed_home}/.dotfiles.nix"
     else
         print_warning "Could not find ${installed_home} — dotfiles.nix was not copied."
