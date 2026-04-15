@@ -50,10 +50,17 @@ cd ~/.dotfiles.bootstrap
 
 ### NixOS
 
-Bootstrap is not used for NixOS. Setup and rebuilds are driven directly from
-[dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
-and `nixos-rebuild switch`. See the dotfiles.nix README for the full installation
-guide.
+The initial OS installation is done from the NixOS installer via `nixos-install` — see
+the [dotfiles.nix README](https://gitlab.com/wd2nf8gqct/dotfiles.nix) for that flow.
+After the first boot, run bootstrap the same way:
+
+```bash
+git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
+cd ~/.dotfiles.bootstrap
+./bootstrap.sh
+```
+
+Bootstrap detects NixOS, clones dotfiles.nix locally, and runs `nixos-rebuild switch`.
 
 ## Repository layout
 
