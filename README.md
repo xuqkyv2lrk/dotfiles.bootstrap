@@ -16,10 +16,15 @@
 
 ## What is this?
 
-This is the single entry point for setting up a new machine. It handles
-everything that needs to happen before dotfiles are usable: detecting the
-distro and hardware, installing packages, applying hardware-specific config,
-cloning the dotfiles repos, and wiring them up.
+This is the entry point for setting up a new Arch or Ubuntu machine. It
+handles everything that needs to happen before dotfiles are usable: detecting
+the distro and hardware, installing packages, applying hardware-specific
+config, cloning the dotfiles repos, and wiring them up.
+
+NixOS is self-contained — existing hosts can skip bootstrap entirely and
+rebuild directly from [dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix).
+Bootstrap only needs to run on a NixOS machine once, when the host config
+already exists in the flake.
 
 The other repos are config only:
 
@@ -63,7 +68,7 @@ cd ~/.dotfiles.bootstrap
 │   ├── install.sh        # installs DE packages, wires dotfiles.di via stow
 │   └── packages.yaml     # DE package list with distro-specific exceptions
 └── nix/
-    └── install.sh        # NixOS path — hardware module selection, nixos-rebuild
+    └── install.sh        # NixOS path — clone dotfiles.nix, nixos-rebuild
 ```
 
 ## License
