@@ -5,7 +5,7 @@
 
 # install_nix
 # Parameters:
-#   $1 - hardware identifier
+#   $1 - hardware identifier (from detect_hardware in common.sh)
 function install_nix() {
     local hardware="${1}"
 
@@ -15,7 +15,12 @@ function install_nix() {
     hostname="$(hostname)"
 
     _clone_nix
-    _select_nix_host "${hostname}" "${hardware}"
+
+    if ! _select_nix_host "${hostname}" "${hardware}"; then
+        print_warning "Rerun ./bootstrap.sh once the host config has been added."
+        return 1
+    fi
+
     _rebuild_nix "${hostname}"
 
     print_success "NixOS configuration applied."
@@ -32,13 +37,49 @@ function _clone_nix() {
     fi
 }
 
+# _select_nix_host
+# Verifies a nixosConfiguration exists for the current hostname.
+# If not, generates hardware-configuration.nix and prints scaffolding guidance.
+# Returns 1 if no host config exists (rebuild cannot proceed).
+# Parameters:
+#   $1 - hostname
+#   $2 - hardware identifier
 function _select_nix_host() {
     local hostname="${1}"
     local hardware="${2}"
-    # TODO: hardware detection → NixOS module selection
-    # e.g. detect ROG → enable hardware.asus module
-    #      detect ThinkPad → enable ThinkPad-specific params
-    print_info "Selecting NixOS host config for ${hostname} (${hardware})"
+    local dest="${HOME}/.dotfiles.nix"
+
+    if [[ -n "$(grep "nixosConfigurations\.${hostname}" "${dest}/flake.nix" 2>/dev/null)" ]]; then
+        print_info "Found NixOS config for '${hostname}'"
+        return 0
+    fi
+
+    print_warning "No NixOS config found for hostname '${hostname}'"
+    print_step "Generating hardware configuration"
+
+    local host_dir="${dest}/hosts/${hostname}"
+    mkdir -p "${host_dir}"
+    sudo nixos-generate-config --show-hardware-config > "${host_dir}/hardware-configuration.nix"
+    print_success "Hardware config written to hosts/${hostname}/hardware-configuration.nix"
+
+    local hardware_module=""
+    case "${hardware}" in
+        "ThinkPad T480s") hardware_module="modules/nixos/hardware/thinkpad-t480s.nix" ;;
+        "ROG")            hardware_module="modules/nixos/hardware/asus-rog.nix" ;;
+        "XPS 13 9350")    hardware_module="modules/nixos/hardware/dell-xps-13-9350.nix" ;;
+    esac
+
+    printf "\n"
+    print_info "Next steps:"
+    printf "  1. Add a nixosConfigurations.%s entry in flake.nix\n" "${hostname}"
+    printf "  2. Create hosts/%s/configuration.nix\n" "${hostname}"
+    printf "     Import: ./hardware-configuration.nix\n"
+    if [[ -n "${hardware_module}" ]]; then
+        printf "     Import: ../../%s\n" "${hardware_module}"
+    fi
+    printf "\n"
+
+    return 1
 }
 
 function _rebuild_nix() {
