@@ -50,14 +50,22 @@ cd ~/.dotfiles.bootstrap
 
 ```
 .
-├── bootstrap.sh       # entry point — detect, clone, orchestrate
+├── bootstrap.sh          # entry point — detect, clone, orchestrate
 ├── lib/
-│   └── common.sh      # shared utilities: colors, distro/hardware detection,
-│                      #   package installation helpers
+│   └── common.sh         # shared utilities: colors, distro/hardware detection,
+│                         #   package installation helpers
 ├── core/
-│   └── install.sh     # installs core packages, wires dotfiles.core via stow
+│   ├── install.sh        # installs core packages, wires dotfiles.core via stow
+│   ├── packages.yaml     # package list with distro-specific exceptions
+│   └── system_components/
+│       └── xps_13_9350/  # hardware-specific assets (e.g. firmware files)
 ├── di/
-│   └── install.sh     # installs DE packages, wires dotfiles.di via stow
+│   ├── install.sh        # installs DE packages, wires dotfiles.di via stow
+│   └── packages.yaml     # DE package list with distro-specific exceptions
 └── nix/
-    └── install.sh     # NixOS path — hardware module selection, nixos-rebuild
+    └── install.sh        # NixOS path — hardware module selection, nixos-rebuild
 ```
+
+## License
+
+BSD 3-Clause License. See [LICENSE](LICENSE) file.
