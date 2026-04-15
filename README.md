@@ -16,14 +16,10 @@
 
 ## What is this?
 
-This is the entry point for setting up a new Arch or Ubuntu machine. It
-handles everything that needs to happen before dotfiles are usable: detecting
-the distro and hardware, installing packages, applying hardware-specific
-config, cloning the dotfiles repos, and wiring them up.
-
-NixOS is self-contained — setup and rebuilds are driven directly from
-[dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
-and `nixos-rebuild`. Bootstrap is not used for NixOS.
+This is the entry point for setting up a new machine. It handles everything
+that needs to happen before dotfiles are usable: detecting the distro and
+hardware, installing packages, applying hardware-specific config, cloning the
+dotfiles repos, and wiring them up.
 
 The other repos are config only:
 
@@ -36,19 +32,48 @@ The other repos are config only:
 
 ## Usage
 
+::tabs
+
+:::tab Arch Linux
 ```bash
 git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
 cd ~/.dotfiles.bootstrap
 ./bootstrap.sh
 ```
 
-### Options
+**Options**
 
 ```
 --minimal, --server  Install only CLI tools, skip GUI apps
 --no-di              Skip desktop interface installation
 --help, -h           Show this help message
 ```
+:::
+
+:::tab Ubuntu
+```bash
+git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
+cd ~/.dotfiles.bootstrap
+./bootstrap.sh
+```
+
+**Options**
+
+```
+--minimal, --server  Install only CLI tools, skip GUI apps
+--no-di              Skip desktop interface installation
+--help, -h           Show this help message
+```
+:::
+
+:::tab NixOS
+Bootstrap is not used for NixOS. Setup and rebuilds are driven directly from
+[dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
+and `nixos-rebuild switch`. See the dotfiles.nix README for the full installation
+guide.
+:::
+
+::endtabs
 
 ## Repository layout
 
