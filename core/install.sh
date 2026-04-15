@@ -4,7 +4,7 @@
 # Sourced by bootstrap.sh — do not execute directly.
 
 readonly CORE_DIR="${HOME}/.dotfiles.core"
-readonly CORE_PACKAGES_YAML="${CORE_DIR}/packages.yaml"
+readonly CORE_PACKAGES_YAML="${SCRIPT_DIR}/core/packages.yaml"
 
 # Packages skipped in minimal/server mode
 readonly CORE_SKIP_PACKAGES=(

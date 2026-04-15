@@ -1,0 +1,133 @@
+packages:
+  - imv
+  - pinentry
+  - pipewire
+
+desktop_packages:
+  gnome:
+    - gnome
+    - gnome-themes-extra
+    - gnome-tweaks
+    - extension-manager
+  hyprland:
+    - acpi
+    - dbus
+    - gnome-themes-extra
+    - grim
+    - hypridle
+    - hyprland
+    - hyprlock
+    - hyprpaper
+    - kclock
+    - lxqt-policykit
+    - pamixer
+    - papirus-folders-catppuccin-git
+    - papirus-icon-theme 
+    - pavucontrol
+    - pkg-config
+    - polkit
+    - rofi
+    - slurp
+    - socat
+    - swaync
+    - thunar
+    - waybar
+    - wlogout
+    - xdg-desktop-portal
+    - xdg-desktop-portal-gtk
+    - xdg-desktop-portal-hyprland
+    - xdg-desktop-portal-wlr
+  niri:
+    - bluetui
+    - cliphist
+    - dart-sass
+    - fuzzel
+    - grim
+    - slurp
+    - swappy
+    - wl-clipboard
+    - wlsunset
+    - gnome-keyring
+    - gnome-themes-extra
+    - gtk-engine-murrine
+    - hypridle
+    - nautilus
+    - niri
+    - nwg-bar
+    - libva-nvidia-driver
+    - libva-utils
+    - nvidia-open-dkms
+    - nvidia-utils
+    - catppuccin-gtk-theme-mocha
+    - papirus-folders-catppuccin-git
+    - papirus-icon-theme
+    - polkit
+    - polkit-gnome
+    - pwvucontrol
+    - sassc
+    - swaylock-effects
+    - swaync
+    - swww
+    - waybar-cava
+    - xdg-desktop-portal-gtk
+    - xwayland-satellite
+  sway:
+    - bemenu-wayland
+    - brightnessctl
+    - dmenu
+    - gnome-themes-extra
+    - grim
+    - j4-dmenu-desktop
+    - kanshi
+    - lxqt-policykit
+    - pavucontrol
+    - polkit
+    - python-i3ipc
+    - slurp
+    - swappy
+    - swaybg
+    - swayfx
+    - swayidle
+    - swaylock-effects
+    - swaync
+    - thunar
+    - waybar
+    - xorg-xwayland
+
+  quickshell:
+    - cava
+    - cliphist
+    - ddcutil
+    - imagemagick
+    - noctalia-shell
+    - wlr-randr
+
+exceptions:
+  arch:
+    - pipewire: pipewire pipewire-alsa pipewire-pulseaudio pamixer
+  ubuntu:
+    - extension-manager: gnome-shell-extension-manager
+    - gnome: skip
+    - pinentry: pinentry-tty
+    - pipewire: skip
+    - waybar-cava: waybar
+    - gtk-engine-murrine: gtk2-engines-murrine
+    - polkit-gnome: policykit-1-gnome
+    - niri: skip                          # built by install_niri_stack_ubuntu
+    - xwayland-satellite: skip            # built by install_niri_stack_ubuntu
+    - cliphist: skip                      # built by install_niri_stack_ubuntu
+    - bluetui: skip                       # built by install_niri_stack_ubuntu
+    - wlsunset: skip                      # built by install_niri_stack_ubuntu
+    - dart-sass: skip                     # built by install_niri_stack_ubuntu
+    - catppuccin-gtk-theme-mocha: skip    # built by install_niri_stack_ubuntu
+    - papirus-folders-catppuccin-git: skip # built by install_niri_stack_ubuntu
+    - pwvucontrol: skip                   # built by install_niri_stack_ubuntu
+    - swappy: skip                        # not in Ubuntu 24.04 apt repos
+    - noctalia-shell: skip                # installed via apt repo in install_niri_stack_ubuntu
+    - libva-utils: vainfo
+    - polkit: polkitd
+    - nvidia-open-dkms: skip             # handled by ubuntu-drivers in configure_nvidia_for_niri
+    - nvidia-utils: skip                 # handled by ubuntu-drivers in configure_nvidia_for_niri
+    - libva-nvidia-driver: skip          # handled by ubuntu-drivers in configure_nvidia_for_niri
+
+repositories:

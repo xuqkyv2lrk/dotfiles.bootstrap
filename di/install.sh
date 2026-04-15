@@ -4,7 +4,7 @@
 # Sourced by bootstrap.sh — do not execute directly.
 
 readonly DI_DIR="${HOME}/.dotfiles.di"
-readonly DI_PACKAGES_YAML="${DI_DIR}/packages.yaml"
+readonly DI_PACKAGES_YAML="${SCRIPT_DIR}/di/packages.yaml"
 
 # DE-specific option flags set by _select_de and consumed by downstream functions
 USE_PAPERWM="false"
