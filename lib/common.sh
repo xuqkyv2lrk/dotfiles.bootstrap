@@ -115,6 +115,79 @@ function install_package() {
     esac
 }
 
+# get_packages
+# Reads the flat package list from a packages.yaml file.
+# Parameters:
+#   $1 - path to packages.yaml
+function get_packages() {
+    local packages_yaml="${1}"
+    yq '.packages[]' "${packages_yaml}"
+}
+
+# find_systemd_boot_entries
+# Returns the systemd-boot loader entries directory, or empty string if not found.
+function find_systemd_boot_entries() {
+    local esp=""
+
+    if command -v bootctl &>/dev/null && bootctl is-installed &>/dev/null; then
+        esp="$(bootctl --print-esp-path 2>/dev/null)"
+    fi
+
+    if [[ -z "${esp}" ]]; then
+        local mount_point
+        for mount_point in /boot /efi /boot/efi; do
+            if [[ -d "${mount_point}/loader/entries" ]]; then
+                esp="${mount_point}"
+                break
+            fi
+        done
+    fi
+
+    if [[ -n "${esp}" && -d "${esp}/loader/entries" ]]; then
+        printf "%s/loader/entries" "${esp}"
+    fi
+}
+
+# add_kernel_parameter
+# Appends a kernel parameter to systemd-boot or GRUB. Idempotent.
+# Parameters:
+#   $1 - kernel parameter (e.g. "mem_sleep_default=s2idle")
+#   $2 - distro (arch | ubuntu)
+function add_kernel_parameter() {
+    local param="${1}"
+    local distro="${2}"
+    local entries_dir
+    entries_dir="$(find_systemd_boot_entries)"
+
+    if [[ -n "${entries_dir}" ]]; then
+        local updated=0
+        local entry
+        for entry in "${entries_dir}"/*.conf; do
+            [[ "${entry}" == *fallback* ]] && continue
+            if [[ -z "$(grep -w "${param}" "${entry}" 2>/dev/null)" ]]; then
+                sudo sed -i "/^options / s/$/ ${param}/" "${entry}"
+                print_success "Added '${param}' to ${entry}"
+                updated=1
+            fi
+        done
+        [[ "${updated}" -eq 0 ]] && print_warning "'${param}' already present in systemd-boot entries"
+    elif [[ -f /etc/default/grub ]]; then
+        if [[ -z "$(grep -w "${param}" /etc/default/grub 2>/dev/null)" ]]; then
+            sudo sed -i "s/GRUB_CMDLINE_LINUX_DEFAULT=\"/GRUB_CMDLINE_LINUX_DEFAULT=\"${param} /" \
+                /etc/default/grub
+            case "${distro}" in
+                ubuntu) sudo update-grub ;;
+                *)      sudo grub-mkconfig -o /boot/grub/grub.cfg ;;
+            esac
+            print_success "Added '${param}' to GRUB config"
+        else
+            print_warning "'${param}' already present in GRUB config"
+        fi
+    else
+        print_warning "No supported bootloader found. Add '${param}' manually."
+    fi
+}
+
 # system_update
 # Runs a full system update for the detected distro.
 # Parameters:
