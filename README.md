@@ -21,10 +21,9 @@ handles everything that needs to happen before dotfiles are usable: detecting
 the distro and hardware, installing packages, applying hardware-specific
 config, cloning the dotfiles repos, and wiring them up.
 
-NixOS is self-contained — existing hosts can skip bootstrap entirely and
-rebuild directly from [dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix).
-Bootstrap only needs to run on a NixOS machine once, when the host config
-already exists in the flake.
+NixOS is self-contained — setup and rebuilds are driven directly from
+[dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
+and `nixos-rebuild`. Bootstrap is not used for NixOS.
 
 The other repos are config only:
 
