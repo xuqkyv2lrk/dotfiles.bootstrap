@@ -50,17 +50,23 @@ cd ~/.dotfiles.bootstrap
 
 ### NixOS
 
-The initial OS installation is done from the NixOS installer via `nixos-install` — see
-the [dotfiles.nix README](https://gitlab.com/wd2nf8gqct/dotfiles.nix) for that flow.
-After the first boot, run bootstrap the same way:
+Bootstrap runs from the **NixOS installer ISO** — not after first boot. Partition,
+format, and mount the disk first, then:
 
 ```bash
-git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
-cd ~/.dotfiles.bootstrap
+nixos-generate-config --root /mnt
+git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git /tmp/dotfiles.bootstrap
+cd /tmp/dotfiles.bootstrap
 ./bootstrap.sh
 ```
 
-Bootstrap detects NixOS, clones dotfiles.nix locally, and runs `nixos-rebuild switch`.
+Bootstrap detects NixOS, clones dotfiles.nix, copies the hardware config, scaffolds
+a host config if the hostname is new (opening an editor to wire in the flake entry),
+then runs `nixos-install`. The repo is copied into the installed system before reboot
+so any new files are ready to commit from `~/.dotfiles.nix` after first boot.
+
+See the [dotfiles.nix README](https://gitlab.com/wd2nf8gqct/dotfiles.nix) for the
+full disk setup walkthrough.
 
 ## Repository layout
 
