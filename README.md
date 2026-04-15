@@ -34,7 +34,8 @@ The other repos are config only:
 
 ::tabs
 
-:::tab Arch Linux
+:::tab Arch / Ubuntu
+
 ```bash
 git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
 cd ~/.dotfiles.bootstrap
@@ -48,29 +49,16 @@ cd ~/.dotfiles.bootstrap
 --no-di              Skip desktop interface installation
 --help, -h           Show this help message
 ```
-:::
 
-:::tab Ubuntu
-```bash
-git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
-cd ~/.dotfiles.bootstrap
-./bootstrap.sh
-```
-
-**Options**
-
-```
---minimal, --server  Install only CLI tools, skip GUI apps
---no-di              Skip desktop interface installation
---help, -h           Show this help message
-```
 :::
 
 :::tab NixOS
+
 Bootstrap is not used for NixOS. Setup and rebuilds are driven directly from
 [dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) via `nixos-install`
 and `nixos-rebuild switch`. See the dotfiles.nix README for the full installation
 guide.
+
 :::
 
 ::endtabs
