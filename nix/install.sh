@@ -189,7 +189,12 @@ function _add_flake_entry() {
     printf "      ];\n"
     printf "    };\n"
     printf "\n"
-    print_info "Opening flake.nix — add the entry above, save, and exit to continue."
+    print_info "Opening the real flake.nix from your cloned dotfiles.nix repo."
+    print_info "Other hosts (e.g. xiuhcoatl) are already in there — add the new"
+    print_info "entry above into the nixosConfigurations block alongside them,"
+    print_info "then save and exit to continue with nixos-install."
+    printf "\n"
+    read -rp "Press Enter to open flake.nix..."
     "${EDITOR:-vim}" "${NIX_CLONE_DIR}/flake.nix"
 }
 
