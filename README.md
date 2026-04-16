@@ -79,7 +79,7 @@ a host config if the hostname is new (opening an editor to wire in the flake ent
 then runs `nixos-install`. The repo is copied into the installed system before reboot
 so any new files are ready to commit from `~/.dotfiles.nix` after first boot.
 
-See the [dotfiles.nix README](https://gitlab.com/wd2nf8gqct/dotfiles.nix) for the
+See the [dotfiles.nix README](https://gitlab.com/wd2nf8gqct/dotfiles.nix#base-installation-guide) for the
 full disk setup walkthrough.
 
 ## Repository layout
