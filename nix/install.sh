@@ -30,7 +30,7 @@ function install_nix() {
     local nix_user nix_user_default nix_user_input
     nix_user_default="$(_get_nix_user)"
     if [[ -n "${nix_user_default}" ]]; then
-        read -rp "$(printf "${BLUE}[INFO]${RESET} Username [${nix_user_default}]: ")" nix_user_input
+        read -rp "$(printf "${BLUE}[INFO]${RESET} Username (existing in flake: ${nix_user_default}): ")" nix_user_input
         nix_user="${nix_user_input:-${nix_user_default}}"
     else
         read -rp "$(printf "${BLUE}[INFO]${RESET} Username: ")" nix_user
