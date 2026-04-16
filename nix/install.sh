@@ -40,17 +40,36 @@ function install_nix() {
         fi
     fi
 
+    # WM selection
+    local wm
+    print_step "Select a window manager:"
+    select wm_choice in "Hyprland" "Niri" "Sway" "None (headless/server)"; do
+        case "${wm_choice}" in
+            "Hyprland")              wm="hyprland"; break ;;
+            "Niri")                  wm="niri";     break ;;
+            "Sway")                  wm="sway";     break ;;
+            "None (headless/server)") wm="none";    break ;;
+            *) print_error "Invalid option. Please try again." ;;
+        esac
+    done
+
     printf "\n"
 
     if _host_exists "${hostname}"; then
         print_info "Host '${hostname}' found in flake.nix — skipping scaffold"
     else
         print_info "New host '${hostname}' — scaffolding configuration"
-        _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}"
+        _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}" "${wm}"
         _add_flake_entry "${hostname}" "${nix_user}"
     fi
 
     _copy_hardware_config "${hostname}"
+
+    printf "\n"
+    print_step "Ready to install NixOS — hostname: ${hostname}, user: ${nix_user}, wm: ${wm}"
+    read -rp "$(printf "${BLUE}[INFO]${RESET} Proceed with nixos-install? [y/N]: ")" confirm
+    [[ "${confirm}" =~ ^[Yy]$ ]] || { print_info "Aborted."; return 0; }
+
     _run_nixos_install "${hostname}" "${nix_user}"
 }
 
@@ -89,10 +108,12 @@ function _get_nix_user() {
 #   $1 - hostname
 #   $2 - hardware identifier
 #   $3 - username
+#   $4 - window manager (hyprland | niri | sway | none)
 function _scaffold_new_host() {
     local hostname="${1}"
     local hardware="${2}"
     local nix_user="${3}"
+    local wm="${4}"
     local dest="${NIX_CLONE_DIR}/hosts/${hostname}/configuration.nix"
     mkdir -p "${NIX_CLONE_DIR}/hosts/${hostname}"
 
@@ -142,7 +163,11 @@ function _scaffold_new_host() {
         printf "    noto-fonts-color-emoji\n"
         printf "    nerd-fonts.jetbrains-mono\n"
         printf "  ];\n\n"
-        printf "  programs.hyprland.enable = true;\n\n"
+        case "${wm}" in
+            hyprland) printf "  programs.hyprland.enable = true;\n\n" ;;
+            niri)     printf "  programs.niri.enable = true;\n\n" ;;
+            sway)     printf "  programs.sway.enable = true;\n\n" ;;
+        esac
         printf "  virtualisation.docker    = { enable = true; enableOnBoot = true; };\n"
         printf "  virtualisation.libvirtd.enable = true;\n"
         printf "  programs.virt-manager.enable = true;\n\n"
