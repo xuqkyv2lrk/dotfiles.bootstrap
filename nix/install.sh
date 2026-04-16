@@ -306,6 +306,9 @@ function _run_nixos_install() {
     print_info "Running nixos-install"
     nixos-install --flake "${NIX_CLONE_DIR}#${hostname}"
 
+    print_step "Setting password for ${nix_user}"
+    nixos-enter --root /mnt -- passwd "${nix_user}"
+
     # Preserve the repo into the installed system so it survives the reboot
     # and any scaffolded or updated files are ready to commit.
     local installed_home="/mnt/home/${nix_user}"
