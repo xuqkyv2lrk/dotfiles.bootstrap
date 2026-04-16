@@ -260,7 +260,7 @@ function _install_di_packages() {
 }
 
 # _install_desktop_packages
-# Installs DE-specific packages, filtering out those replaced by Noctalia/Quickshell.
+# Installs DE-specific packages and Noctalia/Quickshell packages.
 # Parameters:
 #   $1 - distro (arch | ubuntu)
 #   $2 - desktop interface
@@ -275,21 +275,7 @@ function _install_desktop_packages() {
         "${DI_PACKAGES_YAML}" 2>/dev/null)
     packages=("${packages[@]//\"/}")
 
-    local qs_replaces=()
-    mapfile -t qs_replaces < <(yq -e ".replaces[]" \
-        "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
-    qs_replaces=("${qs_replaces[@]//\"/}")
-
     for pkg in "${packages[@]}"; do
-        local skip="false" replaced
-        for replaced in "${qs_replaces[@]}"; do
-            if [[ "${pkg}" == "${replaced}" ]]; then
-                skip="true"
-                break
-            fi
-        done
-        [[ "${skip}" == "true" ]] && continue
-
         local pkg_name
         pkg_name="$(get_package_name "${pkg}" "${distro}" "${DI_PACKAGES_YAML}")"
         pkg_name="${pkg_name//\"/}"
@@ -318,30 +304,15 @@ function _stow_di() {
 
     print_step "Wiring dotfiles.di via stow"
 
-    local qs_replaces=()
-    mapfile -t qs_replaces < <(yq -e ".replaces[]" \
-        "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
-    qs_replaces=("${qs_replaces[@]//\"/}")
-
     # Remove pre-existing catppuccin gtk-4.0 symlinks so stow can take ownership
     rm -f "${HOME}/.config/gtk-4.0/gtk.css" \
           "${HOME}/.config/gtk-4.0/gtk-dark.css" \
           "${HOME}/.config/gtk-4.0/assets" 2>/dev/null || true
 
-    local dir dirname skip replaced
+    local dir dirname
     for dir in "${DI_DIR}/${desktop_interface}"/*/; do
         dirname="$(basename "${dir}")"
         [[ "${dirname}" == _* ]] && continue
-
-        skip="false"
-        for replaced in "${qs_replaces[@]}"; do
-            if [[ "${dirname}" == "${replaced}" ]]; then
-                skip="true"
-                break
-            fi
-        done
-        [[ "${skip}" == "true" ]] && continue
-
         stow --adopt -v -t "${HOME}" -d "${DI_DIR}/${desktop_interface}" "${dirname}"
     done
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
