@@ -8,7 +8,6 @@ readonly DI_PACKAGES_YAML="${SCRIPT_DIR}/di/packages.yaml"
 
 # DE-specific option flags set by _select_de and consumed by downstream functions
 USE_PAPERWM="false"
-USE_QUICKSHELL="true"
 
 # install_di
 # Main entry point. Orchestrates full desktop interface installation.
@@ -59,7 +58,7 @@ function _clone_di() {
 
 # _select_de
 # Prompts the user to select a desktop interface and DE-specific options.
-# Sets USE_PAPERWM and USE_QUICKSHELL as side effects.
+# Sets USE_PAPERWM as a side effect.
 # On Ubuntu, asks how to configure the existing GNOME or whether to install Niri.
 # On Arch, presents the full DE list from packages.yaml.
 # Parameters:
@@ -81,8 +80,6 @@ function _select_de() {
                     ;;
                 "Install Niri (Wayland compositor)")
                     _de_result="niri"
-                    # Quickshell required on Ubuntu niri — no prompt needed
-                    USE_QUICKSHELL="true"
                     return
                     ;;
                 "Skip")
@@ -263,7 +260,7 @@ function _install_di_packages() {
 }
 
 # _install_desktop_packages
-# Installs DE-specific packages, filtering out those replaced by Quickshell.
+# Installs DE-specific packages, filtering out those replaced by Noctalia/Quickshell.
 # Parameters:
 #   $1 - distro (arch | ubuntu)
 #   $2 - desktop interface
@@ -279,23 +276,19 @@ function _install_desktop_packages() {
     packages=("${packages[@]//\"/}")
 
     local qs_replaces=()
-    if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-        mapfile -t qs_replaces < <(yq -e ".replaces[]" \
-            "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
-        qs_replaces=("${qs_replaces[@]//\"/}")
-    fi
+    mapfile -t qs_replaces < <(yq -e ".replaces[]" \
+        "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
+    qs_replaces=("${qs_replaces[@]//\"/}")
 
     for pkg in "${packages[@]}"; do
-        if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-            local skip="false" replaced
-            for replaced in "${qs_replaces[@]}"; do
-                if [[ "${pkg}" == "${replaced}" ]]; then
-                    skip="true"
-                    break
-                fi
-            done
-            [[ "${skip}" == "true" ]] && continue
-        fi
+        local skip="false" replaced
+        for replaced in "${qs_replaces[@]}"; do
+            if [[ "${pkg}" == "${replaced}" ]]; then
+                skip="true"
+                break
+            fi
+        done
+        [[ "${skip}" == "true" ]] && continue
 
         local pkg_name
         pkg_name="$(get_package_name "${pkg}" "${distro}" "${DI_PACKAGES_YAML}")"
@@ -305,15 +298,13 @@ function _install_desktop_packages() {
     done
 
     # Quickshell-specific packages
-    if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-        local qs_packages qs_pkg
-        mapfile -t qs_packages < <(yq -e ".desktop_packages.quickshell[]" \
-            "${DI_PACKAGES_YAML}" 2>/dev/null)
-        qs_packages=("${qs_packages[@]//\"/}")
-        for qs_pkg in "${qs_packages[@]}"; do
-            install_package "${qs_pkg}" "${distro}"
-        done
-    fi
+    local qs_packages qs_pkg
+    mapfile -t qs_packages < <(yq -e ".desktop_packages.quickshell[]" \
+        "${DI_PACKAGES_YAML}" 2>/dev/null)
+    qs_packages=("${qs_packages[@]//\"/}")
+    for qs_pkg in "${qs_packages[@]}"; do
+        install_package "${qs_pkg}" "${distro}"
+    done
 }
 
 # _stow_di
@@ -328,11 +319,9 @@ function _stow_di() {
     print_step "Wiring dotfiles.di via stow"
 
     local qs_replaces=()
-    if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-        mapfile -t qs_replaces < <(yq -e ".replaces[]" \
-            "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
-        qs_replaces=("${qs_replaces[@]//\"/}")
-    fi
+    mapfile -t qs_replaces < <(yq -e ".replaces[]" \
+        "${DI_DIR}/quickshell/manifest.json" 2>/dev/null)
+    qs_replaces=("${qs_replaces[@]//\"/}")
 
     # Remove pre-existing catppuccin gtk-4.0 symlinks so stow can take ownership
     rm -f "${HOME}/.config/gtk-4.0/gtk.css" \
@@ -344,29 +333,25 @@ function _stow_di() {
         dirname="$(basename "${dir}")"
         [[ "${dirname}" == _* ]] && continue
 
-        if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-            skip="false"
-            for replaced in "${qs_replaces[@]}"; do
-                if [[ "${dirname}" == "${replaced}" ]]; then
-                    skip="true"
-                    break
-                fi
-            done
-            [[ "${skip}" == "true" ]] && continue
-        fi
+        skip="false"
+        for replaced in "${qs_replaces[@]}"; do
+            if [[ "${dirname}" == "${replaced}" ]]; then
+                skip="true"
+                break
+            fi
+        done
+        [[ "${skip}" == "true" ]] && continue
 
         stow --adopt -v -t "${HOME}" -d "${DI_DIR}/${desktop_interface}" "${dirname}"
     done
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
 
-    if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-        print_info "Wiring quickshell configs"
-        [[ -d "${DI_DIR}/quickshell/quickshell" ]] && \
-            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" quickshell
-        [[ -d "${DI_DIR}/quickshell/noctalia-shell" ]] && \
-            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" noctalia
-        git -C "${DI_DIR}/quickshell" restore */ 2>/dev/null || true
-    fi
+    print_info "Wiring quickshell configs"
+    [[ -d "${DI_DIR}/quickshell/quickshell" ]] && \
+        stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" quickshell
+    [[ -d "${DI_DIR}/quickshell/noctalia-shell" ]] && \
+        stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" noctalia
+    git -C "${DI_DIR}/quickshell" restore */ 2>/dev/null || true
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
         local compositor_config_dir
@@ -381,7 +366,7 @@ function _stow_di() {
 }
 
 # _generate_autostart
-# Generates a compositor-specific autostart.sh — Quickshell or individual tools.
+# Generates a compositor-specific autostart.sh.
 # Parameters:
 #   $1 - compositor config dir name (hypr | niri | sway)
 function _generate_autostart() {
