@@ -31,7 +31,7 @@ function install_nix() {
         print_info "Expected a 'home-manager.users.<user>' entry in flake.nix"
         return 1
     fi
-    print_info "Detected user: ${nix_user}"
+    print_info "Detected user from flake.nix: ${nix_user}"
 
     _copy_hardware_config "${hostname}"
 

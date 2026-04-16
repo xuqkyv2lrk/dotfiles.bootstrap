@@ -43,15 +43,20 @@ function detect_distro() {
 # detect_hardware
 # Returns: ThinkPad T480s | ROG | XPS 13 9350 | unknown
 function detect_hardware() {
-    if ! command -v dmidecode &>/dev/null; then
-        printf "unknown"
-        return
+    local system_version="" system_product=""
+
+    # Prefer sysfs — always available, no dmidecode needed (critical on NixOS installer ISO)
+    if [[ -r /sys/class/dmi/id/product_version ]]; then
+        system_version="$(cat /sys/class/dmi/id/product_version 2>/dev/null)"
+    elif command -v dmidecode &>/dev/null; then
+        system_version="$(sudo dmidecode -s system-version 2>/dev/null)"
     fi
 
-    local system_version
-    local system_product
-    system_version="$(sudo dmidecode -s system-version 2>/dev/null)"
-    system_product="$(sudo dmidecode -s system-product-name 2>/dev/null)"
+    if [[ -r /sys/class/dmi/id/product_name ]]; then
+        system_product="$(cat /sys/class/dmi/id/product_name 2>/dev/null)"
+    elif command -v dmidecode &>/dev/null; then
+        system_product="$(sudo dmidecode -s system-product-name 2>/dev/null)"
+    fi
 
     if [[ "${system_version}" == "ThinkPad T480s" ]]; then
         printf "ThinkPad T480s"
