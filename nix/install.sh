@@ -56,11 +56,18 @@ function install_nix() {
     printf "\n"
 
     if _host_exists "${hostname}"; then
-        print_info "Host '${hostname}' found in flake.nix — skipping scaffold"
+        print_info "Host '${hostname}' found in flake.nix — skipping host scaffold"
     else
         print_info "New host '${hostname}' — scaffolding configuration"
         _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}" "${wm}"
         _add_flake_entry "${hostname}" "${nix_user}"
+    fi
+
+    if _user_exists "${nix_user}"; then
+        print_info "User '${nix_user}' found in home/ — skipping user scaffold"
+    else
+        print_info "New user '${nix_user}' — scaffolding home config"
+        _scaffold_new_user "${nix_user}" "${wm}"
     fi
 
     _copy_hardware_config "${hostname}"
@@ -82,6 +89,57 @@ function _clone_nix() {
     fi
 }
 
+function _host_exists() {
+    local hostname="${1}"
+    [[ -n "$(grep "nixosConfigurations\.${hostname}" "${NIX_CLONE_DIR}/flake.nix" 2>/dev/null)" ]]
+}
+
+function _user_exists() {
+    local nix_user="${1}"
+    [[ -f "${NIX_CLONE_DIR}/home/${nix_user}.nix" ]]
+}
+
+# _scaffold_new_user
+# Generates home/<user>.nix with the appropriate module imports for the selected WM.
+# Parameters:
+#   $1 - username
+#   $2 - window manager (hyprland | niri | sway | none)
+function _scaffold_new_user() {
+    local nix_user="${1}"
+    local wm="${2}"
+    local dest="${NIX_CLONE_DIR}/home/${nix_user}.nix"
+
+    local wm_import=""
+    case "${wm}" in
+        hyprland) wm_import="./modules/hyprland.nix" ;;
+        niri)     wm_import="./modules/niri.nix" ;;
+        sway)     wm_import="./modules/sway.nix" ;;
+    esac
+
+    {
+        printf "{ config, pkgs, ... }:\n"
+        printf "{\n"
+        printf "  imports = [\n"
+        printf "    ./modules/base.nix\n"
+        if [[ "${wm}" != "none" ]]; then
+            printf "    ./modules/noctalia.nix\n"
+            printf "    %s\n" "${wm_import}"
+        fi
+        printf "  ];\n\n"
+        printf "  home.username      = \"%s\";\n" "${nix_user}"
+        printf "  home.homeDirectory = \"/home/%s\";\n" "${nix_user}"
+        printf "  home.stateVersion  = \"25.11\";\n"
+        printf "}\n"
+    } > "${dest}"
+
+    print_success "Scaffolded home/${nix_user}.nix"
+    if [[ "${wm}" != "none" ]]; then
+        print_info "  imports: base.nix, noctalia.nix, ${wm}.nix"
+    else
+        print_info "  imports: base.nix (headless)"
+    fi
+}
+
 function _copy_hardware_config() {
     local hostname="${1}"
     local dest="${NIX_CLONE_DIR}/hosts/${hostname}"
@@ -89,11 +147,6 @@ function _copy_hardware_config() {
     mkdir -p "${dest}"
     cp "/mnt/etc/nixos/hardware-configuration.nix" "${dest}/hardware-configuration.nix"
     print_success "Copied hardware config to hosts/${hostname}/hardware-configuration.nix"
-}
-
-function _host_exists() {
-    local hostname="${1}"
-    [[ -n "$(grep "nixosConfigurations\.${hostname}" "${NIX_CLONE_DIR}/flake.nix" 2>/dev/null)" ]]
 }
 
 # _get_nix_user
@@ -194,10 +247,16 @@ function _scaffold_new_host() {
     } > "${dest}"
 
     print_success "Scaffolded hosts/${hostname}/configuration.nix"
-
-    if [[ -z "${hardware_import}" ]]; then
-        print_warning "Hardware '${hardware}' has no module — edit configuration.nix if needed."
+    if [[ -n "${hardware_import}" ]]; then
+        print_info "  Hardware module: ${hardware_import}"
+    else
+        print_warning "  Hardware '${hardware}' has no module — edit configuration.nix if needed"
     fi
+    case "${wm}" in
+        none) print_info "  Compositor: none (headless)" ;;
+        *)    print_info "  Compositor: programs.${wm}.enable" ;;
+    esac
+    print_info "  User: ${nix_user}"
 }
 
 # _add_flake_entry
