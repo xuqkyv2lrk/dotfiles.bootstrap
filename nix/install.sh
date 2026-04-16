@@ -94,6 +94,7 @@ function _scaffold_new_host() {
     local hardware="${2}"
     local nix_user="${3}"
     local dest="${NIX_CLONE_DIR}/hosts/${hostname}/configuration.nix"
+    mkdir -p "${NIX_CLONE_DIR}/hosts/${hostname}"
 
     local hardware_import=""
     case "${hardware}" in
