@@ -171,38 +171,42 @@ function _scaffold_new_host() {
 }
 
 # _add_flake_entry
-# Prints the flake entry for the new host and opens flake.nix for editing.
+# Auto-inserts the new host entry into flake.nix, then opens it for review.
 # Parameters:
 #   $1 - hostname
 #   $2 - username
 function _add_flake_entry() {
     local hostname="${1}"
     local nix_user="${2}"
+    local flake_file="${NIX_CLONE_DIR}/flake.nix"
+    local tmp_file
+    tmp_file="$(mktemp)"
 
-    printf "\n"
-    print_warning "New host detected — add this entry to flake.nix under nixosConfigurations:"
-    printf "\n"
-    printf "    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n" "${hostname}"
-    printf "      system = \"x86_64-linux\";\n"
-    printf "      specialArgs = { inherit inputs; };\n"
-    printf "      modules = [\n"
-    printf "        ./hosts/%s/configuration.nix\n" "${hostname}"
-    printf "        home-manager.nixosModules.home-manager\n"
-    printf "        {\n"
-    printf "          home-manager.useGlobalPkgs    = true;\n"
-    printf "          home-manager.useUserPackages  = true;\n"
-    printf "          home-manager.users.%s = import ./home/%s.nix;\n" "${nix_user}" "${nix_user}"
-    printf "        }\n"
-    printf "      ];\n"
-    printf "    };\n"
-    printf "\n"
-    print_info "Opening the real flake.nix from your cloned dotfiles.nix repo."
-    print_info "Other hosts (e.g. xiuhcoatl) are already in there — add the new"
-    print_info "entry above into the nixosConfigurations block alongside them,"
-    print_info "then save and exit to continue with nixos-install."
+    local entry
+    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        ./hosts/%s/configuration.nix\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
+        "${hostname}" "${hostname}" "${nix_user}" "${nix_user}")"
+
+    # Insert entry before the last '  };' in the file (closes the outputs block)
+    awk -v entry="${entry}" '
+    { lines[NR] = $0 }
+    END {
+        last = -1
+        for (i = NR; i >= 1; i--) {
+            if (lines[i] == "  };") { last = i; break }
+        }
+        for (i = 1; i <= NR; i++) {
+            if (i == last) printf "\n%s\n\n", entry
+            print lines[i]
+        }
+    }
+    ' "${flake_file}" > "${tmp_file}"
+    mv "${tmp_file}" "${flake_file}"
+
+    print_success "Added ${hostname} entry to flake.nix"
+    print_info "Opening flake.nix for review — verify the entry, then save and exit."
     printf "\n"
     read -rp "Press Enter to open flake.nix..."
-    "${EDITOR:-vim}" "${NIX_CLONE_DIR}/flake.nix"
+    "${EDITOR:-vim}" "${flake_file}"
 }
 
 # _run_nixos_install
