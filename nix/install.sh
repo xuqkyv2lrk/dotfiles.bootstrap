@@ -11,8 +11,6 @@ readonly NIX_CLONE_DIR="/tmp/dotfiles.nix"
 #   $1 - hardware identifier (from detect_hardware in common.sh)
 function install_nix() {
     local hardware="${1}"
-    local hostname
-    hostname="$(hostname)"
 
     if [[ ! -f "/mnt/etc/nixos/hardware-configuration.nix" ]]; then
         print_error "No hardware config found at /mnt/etc/nixos/hardware-configuration.nix"
@@ -24,29 +22,35 @@ function install_nix() {
 
     _clone_nix
 
+    # Prompt for hostname and username upfront
+    local hostname hostname_input
+    read -rp "$(printf "${BLUE}[INFO]${RESET} Hostname [$(hostname)]: ")" hostname_input
+    hostname="${hostname_input:-$(hostname)}"
+
     local nix_user nix_user_default nix_user_input
     nix_user_default="$(_get_nix_user)"
-    printf "\n"
     if [[ -n "${nix_user_default}" ]]; then
-        print_info "Username found in flake.nix: ${nix_user_default}"
-        read -rp "$(printf "${BLUE}[INFO]${RESET} Enter username [${nix_user_default}]: ")" nix_user_input
+        read -rp "$(printf "${BLUE}[INFO]${RESET} Username [${nix_user_default}]: ")" nix_user_input
         nix_user="${nix_user_input:-${nix_user_default}}"
     else
-        read -rp "$(printf "${BLUE}[INFO]${RESET} Enter username: ")" nix_user
+        read -rp "$(printf "${BLUE}[INFO]${RESET} Username: ")" nix_user
         if [[ -z "${nix_user}" ]]; then
             print_error "Username is required"
             return 1
         fi
     fi
-    print_info "Using user: ${nix_user}"
 
-    _copy_hardware_config "${hostname}"
+    printf "\n"
 
-    if ! _host_exists "${hostname}"; then
+    if _host_exists "${hostname}"; then
+        print_info "Host '${hostname}' found in flake.nix — skipping scaffold"
+    else
+        print_info "New host '${hostname}' — scaffolding configuration"
         _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}"
         _add_flake_entry "${hostname}" "${nix_user}"
     fi
 
+    _copy_hardware_config "${hostname}"
     _run_nixos_install "${hostname}" "${nix_user}"
 }
 
