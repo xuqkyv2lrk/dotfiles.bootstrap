@@ -19,7 +19,6 @@ function install_nix() {
     fi
 
     print_step "Installing NixOS configuration"
-    print_info "Detected hardware: ${hardware}"
 
     _clone_nix
 
