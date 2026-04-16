@@ -48,6 +48,20 @@ cd ~/.dotfiles.bootstrap
 --help, -h           Show this help message
 ```
 
+**Desktop interface selection**
+
+The installer prompts for a desktop interface after installing core packages.
+Available choices depend on distro:
+
+| Distro | Options |
+|--------|---------|
+| Arch   | Hyprland, Niri, Sway, GNOME (+ optional PaperWM) |
+| Ubuntu | GNOME (+ optional PaperWM), Niri |
+
+[Noctalia](https://gitlab.com/wd2nf8gqct/dotfiles.di) is always installed as the
+shell layer across all Wayland compositors — it handles the bar, launcher,
+notifications, lock screen, session, screenshots, and wallpapers.
+
 ### NixOS
 
 Bootstrap runs from the **NixOS installer ISO** — not after first boot. Partition,
