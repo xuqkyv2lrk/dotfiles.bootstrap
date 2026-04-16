@@ -212,7 +212,7 @@ function _add_flake_entry() {
     print_info "Opening flake.nix for review — verify the entry, then save and exit."
     printf "\n"
     read -rp "Press Enter to open flake.nix..."
-    "${EDITOR:-vim}" "${flake_file}"
+    vim "${flake_file}"
 }
 
 # _run_nixos_install
