@@ -1,6 +1,5 @@
 packages:
   - imv
-  - pinentry
   - pipewire
 
 desktop_packages:
@@ -121,7 +120,6 @@ exceptions:
   ubuntu:
     - extension-manager: gnome-shell-extension-manager
     - gnome: skip
-    - pinentry: pinentry-tty
     - pipewire: skip
     - gtk-engine-murrine: gtk2-engines-murrine
     - polkit-gnome: policykit-1-gnome

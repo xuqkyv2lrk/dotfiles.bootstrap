@@ -966,9 +966,6 @@ function _configure_desktop_interface() {
     local distro="${1}"
     local desktop_interface="${2}"
     local scale_factor="${3:-auto}"
-    local gpg_config_file="${HOME}/.gnupg/gpg-agent.conf"
-    local pinentry_line="pinentry-program /usr/bin/pinentry-tty"
-
     # Clamshell — keep display on when docked, suspend on lid close otherwise
     print_info "Configuring clamshell settings"
     if [[ -f "/etc/systemd/logind.conf" ]]; then
@@ -979,19 +976,6 @@ function _configure_desktop_interface() {
         printf 'HandleLidSwitchExternalPower=suspend\nHandleLidSwitch=suspend\nHandleLidSwitchDocked=ignore\n' \
             | sudo tee -a /etc/systemd/logind.conf >/dev/null
     fi
-
-    # GPG pinentry-tty
-    print_info "Configuring GPG pinentry"
-    if [[ -f "${gpg_config_file}" ]]; then
-        if [[ -n "$(grep "^pinentry-program" "${gpg_config_file}")" ]]; then
-            sed -i "s|^pinentry-program.*|${pinentry_line}|" "${gpg_config_file}"
-        else
-            printf "%s\n" "${pinentry_line}" >> "${gpg_config_file}"
-        fi
-    else
-        printf "%s\n" "${pinentry_line}" > "${gpg_config_file}"
-    fi
-    gpg-connect-agent reloadagent /bye >/dev/null 2>&1
 
     case "${desktop_interface}" in
         gnome)  _configure_gnome "${distro}" "${scale_factor}" ;;
