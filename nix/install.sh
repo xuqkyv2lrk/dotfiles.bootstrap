@@ -309,6 +309,21 @@ function _run_nixos_install() {
     print_step "Setting password for ${nix_user}"
     nixos-enter --root /mnt -- passwd "${nix_user}"
 
+    # Pre-clone dotfiles repos so home-manager activation succeeds on first boot
+    # without depending on network timing. The activation scripts skip clones when
+    # the directories already exist.
+    local installed_home_inner="/home/${nix_user}"
+    print_step "Pre-cloning dotfiles repos into installed system"
+
+    nixos-enter --root /mnt -- \
+        su - "${nix_user}" -c "
+            git clone https://gitlab.com/wd2nf8gqct/dotfiles.core.git \
+                ${installed_home_inner}/.dotfiles.core
+            git clone --recurse-submodules \
+                https://gitlab.com/wd2nf8gqct/dotfiles.di.git \
+                ${installed_home_inner}/.dotfiles.di
+        " || print_warning "Pre-clone failed — home-manager will retry on first boot"
+
     # Preserve the repo into the installed system so it survives the reboot
     # and any scaffolded or updated files are ready to commit.
     local installed_home="/mnt/home/${nix_user}"
