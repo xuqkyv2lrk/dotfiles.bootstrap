@@ -97,7 +97,7 @@ function _select_de() {
                     print_step "Please select a desktop interface:"
                     local options
                     mapfile -t options < <(yq -e '.desktop_packages | keys | .[]' \
-                        "${DI_PACKAGES_YAML}" 2>/dev/null | tr -d '"')
+                        "${DI_PACKAGES_YAML}" 2>/dev/null | tr -d '"' | grep -v '^quickshell$')
                     select de in "${options[@]}"; do
                         if [[ -n "${de}" ]]; then
                             _de_result="${de}"
