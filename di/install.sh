@@ -8,7 +8,7 @@ readonly DI_PACKAGES_YAML="${SCRIPT_DIR}/di/packages.yaml"
 
 # DE-specific option flags set by _select_de and consumed by downstream functions
 USE_PAPERWM="false"
-USE_QUICKSHELL="false"
+USE_QUICKSHELL="true"
 
 # install_di
 # Main entry point. Orchestrates full desktop interface installation.
@@ -25,13 +25,6 @@ function install_di() {
 
     local desktop_interface
     _select_de "${distro}" desktop_interface
-
-    # Ubuntu + niri always requires Quickshell — individual niri stack tools
-    # (swaync, swaylock-effects, swww, hypridle) require GTK versions unavailable
-    # on Ubuntu 24.04 and are all replaced by Noctalia.
-    if [[ "${distro}" == "ubuntu" && "${desktop_interface}" == "niri" ]]; then
-        USE_QUICKSHELL="true"
-    fi
 
     print_step "Installing ${desktop_interface} on ${distro}"
 
@@ -113,7 +106,6 @@ function _select_de() {
                             _de_result="${de}"
                             case "${de}" in
                                 gnome) _prompt_paperwm ;;
-                                niri)  _prompt_quickshell ;;
                             esac
                             return
                         else
@@ -142,17 +134,6 @@ function _prompt_paperwm() {
     done
 }
 
-function _prompt_quickshell() {
-    print_step "Would you like to use Quickshell (Noctalia) as your desktop shell?"
-    printf "${SUBTEXT}Replaces waybar, swaync, and other individual tools.${RESET}\n"
-    select qs_choice in "Yes" "No"; do
-        case "${qs_choice}" in
-            "Yes") USE_QUICKSHELL="true";  return ;;
-            "No")  USE_QUICKSHELL="false"; return ;;
-            *)     print_error "Invalid option. Please try again." ;;
-        esac
-    done
-}
 
 # _install_di_deps
 # Installs build tools required by the DE installation process.
@@ -425,53 +406,17 @@ function _generate_autostart() {
             niri)
                 printf '/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &\n'
                 printf '/usr/lib/xdg-desktop-portal-gtk &\n'
-                [[ "${USE_QUICKSHELL}" != "true" ]] && printf 'hypridle &\n'
                 printf 'xwayland-satellite &\n'
                 ;;
             sway)
                 printf 'lxqt-policykit-agent &\n'
                 printf '/usr/bin/xdg-user-dirs-update &\n'
                 printf '/usr/libexec/sway-systemd/wait-sni-ready && systemctl --user start sway-xdg-autostart.target\n'
-                printf 'swayidle -w \\\n'
-                printf "    timeout 30 'original=\$(brightnessctl g); brightnessctl set \$(( original / 2 )); echo \$original > /tmp/original_brightness' \\\n"
-                printf "        resume 'brightnessctl set \$(cat /tmp/original_brightness); rm /tmp/original_brightness' \\\n"
-                printf "    timeout 300 'swaylock -f' \\\n"
-                printf "    timeout 360 'swaymsg \"output * power off\"' \\\n"
-                printf "        resume 'swaymsg \"output * power on\"' \\\n"
-                printf "    timeout 60 'pgrep -xu \"\$USER\" swaylock >/dev/null && swaymsg \"output * power off\"' \\\n"
-                printf "        resume 'pgrep -xu \"\$USER\" swaylock >/dev/null && swaymsg \"output * power on\"' \\\n"
-                printf "    before-sleep 'swaylock -f' \\\n"
-                printf "    lock 'swaylock -f' \\\n"
-                printf "    unlock 'pkill -xu \"\$USER\" -SIGUSR1 swaylock' &\n"
                 ;;
         esac
 
         printf '\n# Shell\n'
-        if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-            printf 'qs -p %s/quickshell/noctalia-shell-shell &\n' "${DI_DIR}"
-        else
-            case "${compositor}" in
-                hypr)
-                    printf '%s/.config/hypr/scripts/waybar.sh &\n' "${HOME}"
-                    printf 'swaync &\n'
-                    printf 'wlsunset -l 40.7 -L -74.0 -t 5000 &\n'
-                    printf 'wl-paste --type text --watch cliphist store &\n'
-                    printf 'wl-paste --type image --watch cliphist store &\n'
-                    ;;
-                niri)
-                    printf 'swww-daemon &\n'
-                    printf 'waybar &\n'
-                    printf 'swaync &\n'
-                    printf 'wlsunset -l 40.7 -L -74.0 -t 5000 &\n'
-                    printf 'wl-paste --type text --watch cliphist store &\n'
-                    printf 'wl-paste --type image --watch cliphist store &\n'
-                    ;;
-                sway)
-                    printf 'waybar &\n'
-                    printf 'swaync &\n'
-                    ;;
-            esac
-        fi
+        printf 'qs -p %s/quickshell/noctalia-shell &\n' "${DI_DIR}"
     } > "${script}"
 
     chmod +x "${script}"
@@ -1280,28 +1225,25 @@ function _configure_hyprland() {
         go install github.com/denysvitali/lightctl@latest
     fi
 
-    if ! command -v bluetui &>/dev/null; then
-        print_info "Installing bluetui"
-        cargo install --locked --root "${HOME}" bluetui
-    fi
-
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
+
+    systemctl --user enable --now idle.service 2>/dev/null || \
+        print_warning "Could not enable idle.service — enable it manually after first login"
 }
 
 function _configure_niri() {
     _configure_catppuccin_gtk
     _configure_display_wakeup
 
-    if [[ "${USE_QUICKSHELL}" == "true" ]]; then
-        systemctl --user disable --now hypridle.service 2>/dev/null || true
-    else
-        systemctl --user enable --now idle.service 2>/dev/null || \
-            print_warning "Could not enable idle.service — enable it manually after first login"
-    fi
+    systemctl --user enable --now idle.service 2>/dev/null || \
+        print_warning "Could not enable idle.service — enable it manually after first login"
 }
 
 function _configure_sway() {
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
+
+    systemctl --user enable --now idle.service 2>/dev/null || \
+        print_warning "Could not enable idle.service — enable it manually after first login"
 }
