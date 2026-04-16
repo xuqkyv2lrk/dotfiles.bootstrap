@@ -58,7 +58,7 @@ Available choices depend on distro:
 | Arch   | Hyprland, Niri, Sway, GNOME (+ optional PaperWM) |
 | Ubuntu | GNOME (+ optional PaperWM), Niri |
 
-[Noctalia](https://gitlab.com/wd2nf8gqct/dotfiles.di) is always installed as the
+[Noctalia](https://gitlab.com/wd2nf8gqct/dotfiles.di#noctalia) is always installed as the
 shell layer across all Wayland compositors — it handles the bar, launcher,
 notifications, lock screen, session, screenshots, and wallpapers.
 
