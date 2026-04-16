@@ -65,6 +65,8 @@ packages:
   - dnsmasq
   - ebtables
   - libvirt
+  - gnupg
+  - pinentry
   - openssl
   - openssl-devel
   - qemu
@@ -83,6 +85,7 @@ exceptions:
     qemu: qemu-full
 
   ubuntu:
+    pinentry: pinentry-curses
     yazi: skip                # installed via binary release in install_binaries()
     cloudflared: skip
     go: golang-go
