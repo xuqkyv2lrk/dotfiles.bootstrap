@@ -23,21 +23,18 @@ function install_nix() {
     _clone_nix
 
     # Prompt for hostname and username upfront
-    local hostname hostname_input
-    read -rp "$(printf "${BLUE}[INFO]${RESET} Hostname [$(hostname)]: ")" hostname_input
-    hostname="${hostname_input:-$(hostname)}"
+    local hostname
+    read -rp "$(printf "${BLUE}[INFO]${RESET} Hostname: ")" hostname
+    if [[ -z "${hostname}" ]]; then
+        print_error "Hostname is required"
+        return 1
+    fi
 
-    local nix_user nix_user_default nix_user_input
-    nix_user_default="$(_get_nix_user)"
-    if [[ -n "${nix_user_default}" ]]; then
-        read -rp "$(printf "${BLUE}[INFO]${RESET} Username (existing in flake: ${nix_user_default}): ")" nix_user_input
-        nix_user="${nix_user_input:-${nix_user_default}}"
-    else
-        read -rp "$(printf "${BLUE}[INFO]${RESET} Username: ")" nix_user
-        if [[ -z "${nix_user}" ]]; then
-            print_error "Username is required"
-            return 1
-        fi
+    local nix_user
+    read -rp "$(printf "${BLUE}[INFO]${RESET} Username: ")" nix_user
+    if [[ -z "${nix_user}" ]]; then
+        print_error "Username is required"
+        return 1
     fi
 
     # WM selection
@@ -149,11 +146,6 @@ function _copy_hardware_config() {
     print_success "Copied hardware config to hosts/${hostname}/hardware-configuration.nix"
 }
 
-# _get_nix_user
-# Extracts the username from the home-manager.users.<user> entry in flake.nix.
-function _get_nix_user() {
-    grep -oP "home-manager\.users\.\K\w+" "${NIX_CLONE_DIR}/flake.nix" 2>/dev/null | head -1
-}
 
 # _scaffold_new_host
 # Generates a hosts/<hostname>/configuration.nix from the appropriate hardware profile.
