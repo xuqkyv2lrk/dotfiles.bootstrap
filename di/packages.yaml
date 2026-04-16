@@ -11,87 +11,100 @@ desktop_packages:
     - extension-manager
   hyprland:
     - acpi
+    - catppuccin-gtk-theme-mocha
+    - cliphist
+    - dart-sass
     - dbus
+    - gnome-keyring
     - gnome-themes-extra
     - grim
+    - gtk-engine-murrine
     - hypridle
     - hyprland
-    - hyprlock
-    - hyprpaper
-    - kclock
-    - lxqt-policykit
+    - libva-nvidia-driver
+    - libva-utils
+    - nautilus
+    - nvidia-open-dkms
+    - nvidia-utils
     - pamixer
     - papirus-folders-catppuccin-git
-    - papirus-icon-theme 
-    - pavucontrol
+    - papirus-icon-theme
     - pkg-config
+    - lxqt-policykit
     - polkit
-    - rofi
+    - pwvucontrol
+    - sassc
     - slurp
     - socat
-    - swaync
-    - thunar
-    - waybar
-    - wlogout
+    - swappy
+    - wl-clipboard
+    - wlsunset
     - xdg-desktop-portal
     - xdg-desktop-portal-gtk
     - xdg-desktop-portal-hyprland
     - xdg-desktop-portal-wlr
   niri:
-    - bluetui
+    - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
     - fuzzel
-    - grim
-    - slurp
-    - swappy
-    - wl-clipboard
-    - wlsunset
     - gnome-keyring
     - gnome-themes-extra
+    - grim
     - gtk-engine-murrine
     - hypridle
-    - nautilus
-    - niri
-    - nwg-bar
     - libva-nvidia-driver
     - libva-utils
+    - nautilus
+    - niri
     - nvidia-open-dkms
     - nvidia-utils
-    - catppuccin-gtk-theme-mocha
+    - pamixer
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
     - polkit
     - polkit-gnome
     - pwvucontrol
     - sassc
-    - swaylock-effects
-    - swaync
-    - swww
-    - waybar-cava
+    - slurp
+    - swappy
+    - wl-clipboard
+    - wlsunset
     - xdg-desktop-portal-gtk
     - xwayland-satellite
   sway:
     - bemenu-wayland
-    - brightnessctl
+    - catppuccin-gtk-theme-mocha
+    - cliphist
+    - dart-sass
     - dmenu
+    - gnome-keyring
     - gnome-themes-extra
     - grim
+    - gtk-engine-murrine
+    - hypridle
     - j4-dmenu-desktop
     - kanshi
+    - libva-nvidia-driver
+    - libva-utils
+    - nautilus
+    - nvidia-open-dkms
+    - nvidia-utils
+    - pamixer
+    - papirus-folders-catppuccin-git
+    - papirus-icon-theme
     - lxqt-policykit
-    - pavucontrol
     - polkit
+    - pwvucontrol
     - python-i3ipc
+    - sassc
     - slurp
     - swappy
     - swaybg
     - swayfx
-    - swayidle
-    - swaylock-effects
-    - swaync
-    - thunar
-    - waybar
+    - wl-clipboard
+    - wlsunset
+    - xdg-desktop-portal-gtk
     - xorg-xwayland
 
   quickshell:
@@ -110,13 +123,11 @@ exceptions:
     - gnome: skip
     - pinentry: pinentry-tty
     - pipewire: skip
-    - waybar-cava: waybar
     - gtk-engine-murrine: gtk2-engines-murrine
     - polkit-gnome: policykit-1-gnome
     - niri: skip                          # built by install_niri_stack_ubuntu
     - xwayland-satellite: skip            # built by install_niri_stack_ubuntu
     - cliphist: skip                      # built by install_niri_stack_ubuntu
-    - bluetui: skip                       # built by install_niri_stack_ubuntu
     - wlsunset: skip                      # built by install_niri_stack_ubuntu
     - dart-sass: skip                     # built by install_niri_stack_ubuntu
     - catppuccin-gtk-theme-mocha: skip    # built by install_niri_stack_ubuntu
