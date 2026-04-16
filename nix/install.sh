@@ -306,6 +306,11 @@ function _run_nixos_install() {
     local hostname="${1}"
     local nix_user="${2}"
 
+    # Stage all new/modified files so Nix can see them when evaluating the flake.
+    # Nix flakes only include git-tracked content — untracked files are invisible.
+    print_info "Staging changes in dotfiles.nix so Nix can evaluate them"
+    git -C "${NIX_CLONE_DIR}" add -A
+
     print_info "Running nixos-install"
     nixos-install --flake "${NIX_CLONE_DIR}#${hostname}"
 
