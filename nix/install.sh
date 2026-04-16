@@ -190,7 +190,7 @@ function _add_flake_entry() {
     printf "    };\n"
     printf "\n"
     print_info "Opening flake.nix — add the entry above, save, and exit to continue."
-    "${EDITOR:-nano}" "${NIX_CLONE_DIR}/flake.nix"
+    "${EDITOR:-vim}" "${NIX_CLONE_DIR}/flake.nix"
 }
 
 # _run_nixos_install
