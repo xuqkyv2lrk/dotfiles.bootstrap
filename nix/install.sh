@@ -24,14 +24,21 @@ function install_nix() {
 
     _clone_nix
 
-    local nix_user
-    nix_user="$(_get_nix_user)"
-    if [[ -z "${nix_user}" ]]; then
-        print_error "Could not detect username from flake.nix"
-        print_info "Expected a 'home-manager.users.<user>' entry in flake.nix"
-        return 1
+    local nix_user nix_user_default nix_user_input
+    nix_user_default="$(_get_nix_user)"
+    printf "\n"
+    if [[ -n "${nix_user_default}" ]]; then
+        print_info "Username found in flake.nix: ${nix_user_default}"
+        read -rp "$(printf "${BLUE}[INFO]${RESET} Enter username [${nix_user_default}]: ")" nix_user_input
+        nix_user="${nix_user_input:-${nix_user_default}}"
+    else
+        read -rp "$(printf "${BLUE}[INFO]${RESET} Enter username: ")" nix_user
+        if [[ -z "${nix_user}" ]]; then
+            print_error "Username is required"
+            return 1
+        fi
     fi
-    print_info "Detected user from flake.nix: ${nix_user}"
+    print_info "Using user: ${nix_user}"
 
     _copy_hardware_config "${hostname}"
 
