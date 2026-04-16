@@ -494,20 +494,6 @@ function _detect_hidpi_screen() {
     fi
 }
 
-# _install_hyprland_suite
-# Installs Hyprland and components on Ubuntu via the official installer.
-# Parameters: list of components (e.g. hyprland hypridle hyprlock hyprpaper)
-function _install_hyprland_suite() {
-    local components=("$@")
-    print_info "Installing Hyprland suite on Ubuntu: ${components[*]}"
-    if ! command -v Hyprland &>/dev/null; then
-        curl -sSL https://raw.githubusercontent.com/JaKooLit/Ubuntu-Hyprland/main/install.sh \
-            | bash -s -- --quiet
-    else
-        print_info "Hyprland already installed, skipping"
-    fi
-}
-
 # ─── Ubuntu Niri Stack ────────────────────────────────────────────────────────
 
 # _build_libwayland_ubuntu
@@ -697,15 +683,6 @@ function _install_cliphist_ubuntu() {
     GOBIN="${HOME}/.local/bin" go install go.senan.xyz/cliphist@latest
 }
 
-function _install_bluetui_ubuntu() {
-    if command -v bluetui &>/dev/null; then
-        print_info "bluetui already installed, skipping"
-        return
-    fi
-    print_info "Installing bluetui"
-    cargo install --locked --root "${HOME}" bluetui
-}
-
 function _install_dart_sass_ubuntu() {
     if command -v sass &>/dev/null; then
         print_info "dart-sass already installed, skipping"
@@ -834,7 +811,6 @@ function _install_niri_stack_ubuntu() {
     _build_xwayland_satellite_ubuntu
     _build_wlsunset_ubuntu
     _install_cliphist_ubuntu
-    _install_bluetui_ubuntu
     _install_dart_sass_ubuntu
     _install_catppuccin_gtk_ubuntu
     _install_papirus_catppuccin_ubuntu
@@ -1019,7 +995,7 @@ function _configure_desktop_interface() {
 
     case "${desktop_interface}" in
         gnome)  _configure_gnome "${distro}" "${scale_factor}" ;;
-        hyprland) _configure_hyprland "${distro}" ;;
+        hyprland) _configure_hyprland ;;
         niri)   _configure_niri ;;
         sway)   _configure_sway ;;
         *)      print_error "Unsupported desktop interface: ${desktop_interface}" ;;
@@ -1156,30 +1132,8 @@ function _configure_gnome() {
     printf "\n${YELLOW}Please log out and back in for all GNOME changes to take effect.${RESET}\n"
 }
 
-# _configure_hyprland
-# Parameters:
-#   $1 - distro (arch | ubuntu)
 function _configure_hyprland() {
-    local distro="${1}"
-
-    if [[ "${distro}" == "ubuntu" ]]; then
-        _install_hyprland_suite hyprland hypridle hyprlock hyprpaper
-    fi
-
     sudo sed -i 's/^#HandleLidSwitch=.*/HandleLidSwitch=ignore/' /etc/systemd/logind.conf
-
-    if ! command -v volumectl &>/dev/null; then
-        print_info "Installing volumectl"
-        curl -L "https://github.com/vially/volumectl/releases/download/v0.1.0/volumectl" \
-            -o "${HOME}/bin/volumectl"
-        chmod +x "${HOME}/bin/volumectl"
-    fi
-
-    if ! command -v lightctl &>/dev/null; then
-        print_info "Installing lightctl"
-        export GOBIN="${HOME}/bin"
-        go install github.com/denysvitali/lightctl@latest
-    fi
 
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
