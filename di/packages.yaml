@@ -110,7 +110,6 @@ desktop_packages:
     - cava
     - cliphist
     - ddcutil
-    - imagemagick
     - noctalia-shell
     - wlr-randr
 
