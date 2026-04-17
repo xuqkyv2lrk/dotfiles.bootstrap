@@ -10,7 +10,6 @@ desktop_packages:
     - extension-manager
   hyprland:
     - acpi
-    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -29,7 +28,6 @@ desktop_packages:
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
     - pkg-config
-    - playerctl
     - lxqt-policykit
     - polkit
     - pwvucontrol
@@ -44,7 +42,6 @@ desktop_packages:
     - xdg-desktop-portal-hyprland
     - xdg-desktop-portal-wlr
   niri:
-    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -62,7 +59,6 @@ desktop_packages:
     - pamixer
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
-    - playerctl
     - polkit
     - polkit-gnome
     - pwvucontrol
@@ -75,7 +71,6 @@ desktop_packages:
     - xwayland-satellite
   sway:
     - bemenu-wayland
-    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -94,7 +89,6 @@ desktop_packages:
     - pamixer
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
-    - playerctl
     - lxqt-policykit
     - polkit
     - pwvucontrol
