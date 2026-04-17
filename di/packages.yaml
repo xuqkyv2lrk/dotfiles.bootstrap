@@ -10,6 +10,7 @@ desktop_packages:
     - extension-manager
   hyprland:
     - acpi
+    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -18,7 +19,6 @@ desktop_packages:
     - gnome-themes-extra
     - grim
     - gtk-engine-murrine
-    - hypridle
     - hyprland
     - libva-nvidia-driver
     - libva-utils
@@ -29,6 +29,7 @@ desktop_packages:
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
     - pkg-config
+    - playerctl
     - lxqt-policykit
     - polkit
     - pwvucontrol
@@ -43,6 +44,7 @@ desktop_packages:
     - xdg-desktop-portal-hyprland
     - xdg-desktop-portal-wlr
   niri:
+    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -51,7 +53,6 @@ desktop_packages:
     - gnome-themes-extra
     - grim
     - gtk-engine-murrine
-    - hypridle
     - libva-nvidia-driver
     - libva-utils
     - nautilus
@@ -61,6 +62,7 @@ desktop_packages:
     - pamixer
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
+    - playerctl
     - polkit
     - polkit-gnome
     - pwvucontrol
@@ -73,6 +75,7 @@ desktop_packages:
     - xwayland-satellite
   sway:
     - bemenu-wayland
+    - brightnessctl
     - catppuccin-gtk-theme-mocha
     - cliphist
     - dart-sass
@@ -81,7 +84,6 @@ desktop_packages:
     - gnome-themes-extra
     - grim
     - gtk-engine-murrine
-    - hypridle
     - j4-dmenu-desktop
     - kanshi
     - libva-nvidia-driver
@@ -92,6 +94,7 @@ desktop_packages:
     - pamixer
     - papirus-folders-catppuccin-git
     - papirus-icon-theme
+    - playerctl
     - lxqt-policykit
     - polkit
     - pwvucontrol

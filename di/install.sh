@@ -356,7 +356,6 @@ function _generate_autostart() {
             hypr)
                 printf '/usr/bin/lxqt-policykit-agent &\n'
                 printf '%s/.config/hypr/scripts/xdg_portal_hyprland.sh &\n' "${HOME}"
-                printf 'hypridle &\n'
                 printf '%s/.config/hypr/scripts/monitor_hotplug.sh &\n' "${HOME}"
                 ;;
             niri)
