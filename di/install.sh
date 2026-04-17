@@ -1117,13 +1117,8 @@ function _configure_gnome() {
 }
 
 function _configure_hyprland() {
-    sudo sed -i 's/^#HandleLidSwitch=.*/HandleLidSwitch=ignore/' /etc/systemd/logind.conf
-
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
-
-    systemctl --user enable --now idle.service 2>/dev/null || \
-        print_warning "Could not enable idle.service — enable it manually after first login"
 }
 
 function _configure_niri() {
