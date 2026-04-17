@@ -976,6 +976,9 @@ function _configure_desktop_interface() {
             | sudo tee -a /etc/systemd/logind.conf >/dev/null
     fi
 
+    # Set system color scheme for portal-aware apps (Firefox, etc.)
+    dconf write /org/gnome/desktop/interface/color-scheme "'prefer-dark'" 2>/dev/null || true
+
     case "${desktop_interface}" in
         gnome)  _configure_gnome "${distro}" "${scale_factor}" ;;
         hyprland) _configure_hyprland ;;
@@ -1115,6 +1118,57 @@ function _configure_gnome() {
     printf "\n${YELLOW}Please log out and back in for all GNOME changes to take effect.${RESET}\n"
 }
 
+function _install_media_inhibit_service() {
+    local script_dir="${HOME}/.local/bin"
+    local service_dir="${HOME}/.config/systemd/user"
+    local script="${script_dir}/noctalia-media-inhibit"
+    local service="${service_dir}/noctalia-media-inhibit.service"
+
+    mkdir -p "${script_dir}" "${service_dir}"
+
+    cat > "${script}" <<'EOF_SCRIPT'
+#!/usr/bin/env bash
+set -euo pipefail
+
+qs_shell="$HOME/.dotfiles.di/quickshell/noctalia-shell"
+inhibited=false
+
+while true; do
+    status="$(playerctl status 2>/dev/null || printf "Stopped")"
+    if [[ "$status" == "Playing" ]] && [[ "$inhibited" == "false" ]]; then
+        qs ipc --any-display -p "$qs_shell" call idleInhibitor enable 2>/dev/null || true
+        inhibited=true
+    elif [[ "$status" != "Playing" ]] && [[ "$inhibited" == "true" ]]; then
+        qs ipc --any-display -p "$qs_shell" call idleInhibitor disable 2>/dev/null || true
+        inhibited=false
+    fi
+    sleep 5
+done
+EOF_SCRIPT
+
+    chmod +x "${script}"
+
+    cat > "${service}" <<EOF_UNIT
+[Unit]
+Description=Inhibit noctalia idle when media is playing
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+ExecStart=${script}
+
+[Install]
+WantedBy=graphical-session.target
+EOF_UNIT
+
+    systemctl --user daemon-reload
+    systemctl --user enable noctalia-media-inhibit.service
+    print_success "noctalia-media-inhibit service installed"
+}
+
 function _install_lock_before_suspend() {
     local qs_bin
     qs_bin="$(command -v qs || command -v quickshell)"
@@ -1147,14 +1201,17 @@ EOF_UNIT
 
 function _configure_hyprland() {
     _install_lock_before_suspend
+    _install_media_inhibit_service
 }
 
 function _configure_niri() {
     _configure_catppuccin_gtk
     _configure_display_wakeup
     _install_lock_before_suspend
+    _install_media_inhibit_service
 }
 
 function _configure_sway() {
     _install_lock_before_suspend
+    _install_media_inhibit_service
 }
