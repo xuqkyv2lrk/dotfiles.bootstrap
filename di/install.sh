@@ -956,36 +956,10 @@ function _configure_di_hardware() {
 }
 
 # _configure_thinkpad_t480s
-# Sets mem_sleep_default=deep for S3 sleep state.
-# Requires BIOS: Config → Power → Sleep State = Linux
+# ThinkPad T480s specific config.
+# Note: BIOS must have Config → Power → Sleep State = Linux for S3 to work.
 function _configure_thinkpad_t480s() {
-    print_step "Configuring ThinkPad T480s sleep state"
-
-    local entries_dir
-    entries_dir="$(find_systemd_boot_entries)"
-    if [[ -n "${entries_dir}" ]]; then
-        local entry
-        for entry in "${entries_dir}"/*.conf; do
-            [[ "${entry}" == *fallback* ]] && continue
-            if [[ -z "$(grep "mem_sleep_default=deep" "${entry}")" ]]; then
-                sudo sed -i '/^options / s/$/ mem_sleep_default=deep/' "${entry}"
-                print_success "Added mem_sleep_default=deep to ${entry}"
-            else
-                print_info "mem_sleep_default=deep already present in ${entry}"
-            fi
-        done
-    elif [[ -f /etc/default/grub ]]; then
-        if [[ -z "$(grep "mem_sleep_default=deep" /etc/default/grub)" ]]; then
-            sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="mem_sleep_default=deep /' \
-                /etc/default/grub
-            sudo grub-mkconfig -o /boot/grub/grub.cfg
-            print_success "Added mem_sleep_default=deep to GRUB"
-        fi
-    else
-        print_warning "No bootloader config found — add mem_sleep_default=deep manually"
-    fi
-
-    print_info "Remember to set BIOS: Config → Power → Sleep State = Linux"
+    print_info "ThinkPad T480s: remember to set BIOS Config → Power → Sleep State = Linux for S3 deep sleep"
 }
 
 # _configure_desktop_interface
@@ -1007,6 +981,25 @@ function _configure_desktop_interface() {
     else
         printf 'HandleLidSwitchExternalPower=suspend\nHandleLidSwitch=suspend\nHandleLidSwitchDocked=ignore\n' \
             | sudo tee -a /etc/systemd/logind.conf >/dev/null
+    fi
+
+    # Prefer S3 deep sleep; kernel falls back to s2idle if unavailable
+    local entries_dir
+    entries_dir="$(find_systemd_boot_entries)"
+    if [[ -n "${entries_dir}" ]]; then
+        local entry
+        for entry in "${entries_dir}"/*.conf; do
+            [[ "${entry}" == *fallback* ]] && continue
+            if [[ -z "$(grep "mem_sleep_default=deep" "${entry}")" ]]; then
+                sudo sed -i '/^options / s/$/ mem_sleep_default=deep/' "${entry}"
+            fi
+        done
+    elif [[ -f /etc/default/grub ]]; then
+        if [[ -z "$(grep "mem_sleep_default=deep" /etc/default/grub)" ]]; then
+            sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="mem_sleep_default=deep /' \
+                /etc/default/grub
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+        fi
     fi
 
     # Set system color scheme for portal-aware apps (Firefox, etc.)
