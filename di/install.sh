@@ -1117,35 +1117,36 @@ function _configure_gnome() {
 }
 
 function _install_lock_before_suspend() {
-    local user="${USER}"
-    local home="${HOME}"
     local qs_bin
     qs_bin="$(command -v qs || command -v quickshell)"
 
-    sudo tee /etc/systemd/system/lock-before-suspend.service > /dev/null <<EOF
+    sudo tee /etc/systemd/system/lock-before-suspend.service > /dev/null <<'EOF_UNIT'
 [Unit]
 Description=Lock noctalia screen before suspend
 Before=sleep.target
 
 [Service]
 Type=oneshot
-User=${user}
-Environment=XDG_RUNTIME_DIR=/run/user/$(id -u "${user}")
-ExecStart=/bin/sh -c '${qs_bin} ipc --any-display -p ${home}/.dotfiles.di/quickshell/noctalia-shell call lockScreen lock && sleep 1'
+ExecStart=/bin/sh -c '\
+  user=$(loginctl list-sessions --no-legend | awk "{print \$3}" | grep -v root | head -1); \
+  uid=$(id -u "$user"); \
+  home=$(getent passwd "$user" | cut -d: -f6); \
+  XDG_RUNTIME_DIR=/run/user/$uid QS_BIN ipc --any-display \
+    -p "$home/.dotfiles.di/quickshell/noctalia-shell" call lockScreen lock; \
+  sleep 1'
 TimeoutSec=15
 
 [Install]
 WantedBy=sleep.target
-EOF
+EOF_UNIT
 
+    sudo sed -i "s|QS_BIN|${qs_bin}|g" /etc/systemd/system/lock-before-suspend.service
     sudo systemctl daemon-reload
     sudo systemctl enable lock-before-suspend.service
     print_success "lock-before-suspend service installed"
 }
 
 function _configure_hyprland() {
-    gsettings set org.gnome.desktop.interface color-scheme prefer-dark
-    gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
     _install_lock_before_suspend
 }
 
@@ -1156,7 +1157,5 @@ function _configure_niri() {
 }
 
 function _configure_sway() {
-    gsettings set org.gnome.desktop.interface color-scheme prefer-dark
-    gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
     _install_lock_before_suspend
 }
