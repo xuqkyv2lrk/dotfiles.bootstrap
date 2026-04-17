@@ -1116,23 +1116,47 @@ function _configure_gnome() {
     printf "\n${YELLOW}Please log out and back in for all GNOME changes to take effect.${RESET}\n"
 }
 
+function _install_lock_before_suspend() {
+    local user="${USER}"
+    local home="${HOME}"
+    local qs_bin
+    qs_bin="$(command -v qs || command -v quickshell)"
+
+    sudo tee /etc/systemd/system/lock-before-suspend.service > /dev/null <<EOF
+[Unit]
+Description=Lock noctalia screen before suspend
+Before=sleep.target
+
+[Service]
+Type=oneshot
+User=${user}
+Environment=XDG_RUNTIME_DIR=/run/user/$(id -u "${user}")
+ExecStart=/bin/sh -c '${qs_bin} ipc --any-display -p ${home}/.dotfiles.di/quickshell/noctalia-shell call lockScreen lock && sleep 1'
+TimeoutSec=15
+
+[Install]
+WantedBy=sleep.target
+EOF
+
+    sudo systemctl daemon-reload
+    sudo systemctl enable lock-before-suspend.service
+    print_success "lock-before-suspend service installed"
+}
+
 function _configure_hyprland() {
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
+    _install_lock_before_suspend
 }
 
 function _configure_niri() {
     _configure_catppuccin_gtk
     _configure_display_wakeup
-
-    systemctl --user enable --now idle.service 2>/dev/null || \
-        print_warning "Could not enable idle.service — enable it manually after first login"
+    _install_lock_before_suspend
 }
 
 function _configure_sway() {
     gsettings set org.gnome.desktop.interface color-scheme prefer-dark
     gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark
-
-    systemctl --user enable --now idle.service 2>/dev/null || \
-        print_warning "Could not enable idle.service — enable it manually after first login"
+    _install_lock_before_suspend
 }
