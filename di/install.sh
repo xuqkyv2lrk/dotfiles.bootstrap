@@ -950,9 +950,42 @@ function _configure_usb_audio() {
 function _configure_di_hardware() {
     local hardware="${1}"
     case "${hardware}" in
-        "ThinkPad T480s"|"ROG") ;;
+        "ThinkPad T480s") _configure_thinkpad_t480s ;;
         *) ;;
     esac
+}
+
+# _configure_thinkpad_t480s
+# Sets mem_sleep_default=deep for S3 sleep state.
+# Requires BIOS: Config → Power → Sleep State = Linux
+function _configure_thinkpad_t480s() {
+    print_step "Configuring ThinkPad T480s sleep state"
+
+    local entries_dir
+    entries_dir="$(find_systemd_boot_entries)"
+    if [[ -n "${entries_dir}" ]]; then
+        local entry
+        for entry in "${entries_dir}"/*.conf; do
+            [[ "${entry}" == *fallback* ]] && continue
+            if [[ -z "$(grep "mem_sleep_default=deep" "${entry}")" ]]; then
+                sudo sed -i '/^options / s/$/ mem_sleep_default=deep/' "${entry}"
+                print_success "Added mem_sleep_default=deep to ${entry}"
+            else
+                print_info "mem_sleep_default=deep already present in ${entry}"
+            fi
+        done
+    elif [[ -f /etc/default/grub ]]; then
+        if [[ -z "$(grep "mem_sleep_default=deep" /etc/default/grub)" ]]; then
+            sudo sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="mem_sleep_default=deep /' \
+                /etc/default/grub
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            print_success "Added mem_sleep_default=deep to GRUB"
+        fi
+    else
+        print_warning "No bootloader config found — add mem_sleep_default=deep manually"
+    fi
+
+    print_info "Remember to set BIOS: Config → Power → Sleep State = Linux"
 }
 
 # _configure_desktop_interface
