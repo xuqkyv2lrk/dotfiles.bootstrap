@@ -5,6 +5,7 @@
 
 readonly CORE_DIR="${HOME}/.dotfiles.core"
 readonly CORE_PACKAGES_YAML="${SCRIPT_DIR}/core/packages.yaml"
+readonly UTILITY_SCRIPTS_DIR="${HOME}/utility-scripts"
 
 # Packages skipped in minimal/server mode
 readonly CORE_SKIP_PACKAGES=(
@@ -26,6 +27,7 @@ function install_core() {
     print_step "Installing core"
 
     _clone_core
+    _clone_utility-scripts
     _setup_repos "${distro}"
     system_update "${distro}"
     _install_core_packages "${distro}"
@@ -51,6 +53,16 @@ function _clone_core() {
     else
         print_info "dotfiles.core already present, skipping clone"
     fi
+}
+
+function _clone_utility-scripts() {
+    if [[ ! -d "${UTILITY_SCRIPTS_DIR}" ]]; then
+        print_info "Cloning utility-scripts"
+        git clone "https://gitlab.com/wd2nf8gqct/utility-scripts.git" "${UTILITY_SCRIPTS_DIR}"
+    else
+        print_info "utility-scripts already present, skipping clone"
+    fi
+    bash "${UTILITY_SCRIPTS_DIR}/setup.sh"
 }
 
 # _setup_repos

@@ -39,13 +39,15 @@ function install_nix() {
 
     # WM selection
     local wm
-    print_step "Select a window manager:"
-    select wm_choice in "Hyprland" "Niri" "Sway" "None (headless/server)"; do
+    print_step "Select a desktop environment or window manager:"
+    select wm_choice in "Hyprland" "Niri" "Sway" "GNOME" "GNOME + PaperWM" "None (headless/server)"; do
         case "${wm_choice}" in
-            "Hyprland")              wm="hyprland"; break ;;
-            "Niri")                  wm="niri";     break ;;
-            "Sway")                  wm="sway";     break ;;
-            "None (headless/server)") wm="none";    break ;;
+            "Hyprland")               wm="hyprland";      break ;;
+            "Niri")                   wm="niri";           break ;;
+            "Sway")                   wm="sway";           break ;;
+            "GNOME")                  wm="gnome";          break ;;
+            "GNOME + PaperWM")        wm="gnome-paperwm";  break ;;
+            "None (headless/server)") wm="none";           break ;;
             *) print_error "Invalid option. Please try again." ;;
         esac
     done
@@ -97,31 +99,33 @@ function _user_exists() {
 }
 
 # _scaffold_new_user
-# Generates home/<user>.nix with the appropriate module imports for the selected WM.
+# Generates home/<user>.nix with the appropriate module imports for the selected DE/WM.
 # Parameters:
 #   $1 - username
-#   $2 - window manager (hyprland | niri | sway | none)
+#   $2 - desktop (hyprland | niri | sway | gnome | gnome-paperwm | none)
 function _scaffold_new_user() {
     local nix_user="${1}"
     local wm="${2}"
     local dest="${NIX_CLONE_DIR}/home/${nix_user}.nix"
 
-    local wm_import=""
-    case "${wm}" in
-        hyprland) wm_import="./modules/hyprland.nix" ;;
-        niri)     wm_import="./modules/niri.nix" ;;
-        sway)     wm_import="./modules/sway.nix" ;;
-    esac
-
     {
-        printf "{ config, pkgs, ... }:\n"
+        printf "{ ... }:\n"
         printf "{\n"
         printf "  imports = [\n"
         printf "    ./modules/base.nix\n"
-        if [[ "${wm}" != "none" ]]; then
-            printf "    ./modules/noctalia.nix\n"
-            printf "    %s\n" "${wm_import}"
-        fi
+        case "${wm}" in
+            hyprland|niri|sway)
+                printf "    ./modules/noctalia.nix\n"
+                printf "    ./modules/%s.nix\n" "${wm}"
+                ;;
+            gnome)
+                printf "    ./modules/gnome.nix\n"
+                ;;
+            gnome-paperwm)
+                printf "    ./modules/gnome.nix\n"
+                printf "    ./modules/paperwm.nix\n"
+                ;;
+        esac
         printf "  ];\n\n"
         printf "  home.username      = \"%s\";\n" "${nix_user}"
         printf "  home.homeDirectory = \"/home/%s\";\n" "${nix_user}"
@@ -130,11 +134,12 @@ function _scaffold_new_user() {
     } > "${dest}"
 
     print_success "Scaffolded home/${nix_user}.nix"
-    if [[ "${wm}" != "none" ]]; then
-        print_info "  imports: base.nix, noctalia.nix, ${wm}.nix"
-    else
-        print_info "  imports: base.nix (headless)"
-    fi
+    case "${wm}" in
+        hyprland|niri|sway) print_info "  imports: base.nix, noctalia.nix, ${wm}.nix" ;;
+        gnome)               print_info "  imports: base.nix, gnome.nix" ;;
+        gnome-paperwm)       print_info "  imports: base.nix, gnome.nix, paperwm.nix" ;;
+        none)                print_info "  imports: base.nix (headless)" ;;
+    esac
 }
 
 function _copy_hardware_config() {
