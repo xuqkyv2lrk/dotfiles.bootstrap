@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Refresh NM WiFi state after resume so Noctalia picks up the connected state.
+# NetworkManager reconnects on resume but emits its StateChanged signal before
+# Quickshell's listener is ready, leaving the WiFi widget stale.
+#
+# Systemd passes two arguments: pre|post  <sleep-type>
+
+[[ "${1}" == "post" ]] || exit 0
+
+sleep 5
+nmcli device wifi rescan 2>/dev/null || true

@@ -34,6 +34,7 @@ function install_di() {
     _install_desktop_packages "${distro}" "${desktop_interface}"
     _configure_nvidia_for_niri "${desktop_interface}" "${distro}"
     _stow_di "${distro}" "${desktop_interface}"
+    [[ "${desktop_interface}" != "gnome" ]] && _configure_noctalia
     _configure_desktop_interface "${distro}" "${desktop_interface}"
 
     if [[ "${desktop_interface}" == "gnome" && "${USE_PAPERWM}" == "true" ]]; then
@@ -1195,6 +1196,13 @@ EOF_UNIT
     print_success "noctalia-media-inhibit service installed"
 }
 
+function _install_noctalia_wifi_refresh() {
+    local hook_src="${SCRIPT_DIR}/di/system-sleep/noctalia-wifi-refresh"
+    local hook_dst="/usr/lib/systemd/system-sleep/noctalia-wifi-refresh"
+    sudo install -m 755 "${hook_src}" "${hook_dst}"
+    print_success "WiFi resume hook installed"
+}
+
 function _install_lock_before_suspend() {
     local qs_bin
     qs_bin="$(command -v qs || command -v quickshell)"
@@ -1225,19 +1233,21 @@ EOF_UNIT
     print_success "lock-before-suspend service installed"
 }
 
-function _configure_hyprland() {
+function _configure_noctalia() {
     _install_lock_before_suspend
     _install_media_inhibit_service
+    _install_noctalia_wifi_refresh
+}
+
+function _configure_hyprland() {
+    :
 }
 
 function _configure_niri() {
     _configure_catppuccin_gtk
     _configure_display_wakeup
-    _install_lock_before_suspend
-    _install_media_inhibit_service
 }
 
 function _configure_sway() {
-    _install_lock_before_suspend
-    _install_media_inhibit_service
+    :
 }
