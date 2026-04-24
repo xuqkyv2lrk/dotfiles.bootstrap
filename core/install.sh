@@ -40,7 +40,7 @@ function install_core() {
     _create_nm_dispatcher
     _configure_hardware "${hardware}" "${distro}"
     _configure_uv1_audio
-    _configure_sleep_state
+    _configure_sleep_state "${distro}"
     _post_install "${distro}"
 
     print_success "Core installation complete."
