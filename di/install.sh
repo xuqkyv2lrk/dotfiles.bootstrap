@@ -68,6 +68,10 @@ function _clone_di() {
 function _select_de() {
     local distro="${1}"
     local -n _de_result="${2}"
+    # Always read interactive prompts from the terminal, not stdin,
+    # so piped bootstrap runs don't exhaust the input before we get here.
+    local tty_fd=0
+    [[ -c /dev/tty ]] && exec {tty_fd}</dev/tty
 
     if [[ "${distro}" == "ubuntu" ]]; then
         print_step "How would you like to configure your desktop?"
@@ -76,12 +80,12 @@ function _select_de() {
             case "${de}" in
                 "Configure GNOME (+ optional PaperWM)")
                     _de_result="gnome"
-                    _prompt_paperwm
-                    return
+                    _prompt_paperwm "${tty_fd}"
+                    break
                     ;;
                 "Install Niri (Wayland compositor)")
                     _de_result="niri"
-                    return
+                    break
                     ;;
                 "Skip")
                     print_info "Skipping desktop configuration"
@@ -89,7 +93,7 @@ function _select_de() {
                     ;;
                 *) print_error "Invalid option. Please try again." ;;
             esac
-        done
+        done <&"${tty_fd}"
     else
         print_step "Do you want to install a desktop interface?"
         select choice in "Yes" "No"; do
@@ -103,13 +107,14 @@ function _select_de() {
                         if [[ -n "${de}" ]]; then
                             _de_result="${de}"
                             case "${de}" in
-                                gnome) _prompt_paperwm ;;
+                                gnome) _prompt_paperwm "${tty_fd}" ;;
                             esac
-                            return
+                            break
                         else
                             print_error "Invalid option. Please try again."
                         fi
-                    done
+                    done <&"${tty_fd}"
+                    break
                     ;;
                 "No")
                     print_info "Skipping desktop interface installation"
@@ -117,19 +122,22 @@ function _select_de() {
                     ;;
                 *) print_error "Invalid option. Please try again." ;;
             esac
-        done
+        done <&"${tty_fd}"
     fi
+
+    [[ "${tty_fd}" -ne 0 ]] && exec {tty_fd}>&-
 }
 
 function _prompt_paperwm() {
+    local tty_fd="${1:-0}"
     print_step "Would you like to install PaperWM?"
     select pw_choice in "Yes" "No"; do
         case "${pw_choice}" in
-            "Yes") USE_PAPERWM="true";  return ;;
-            "No")  USE_PAPERWM="false"; return ;;
+            "Yes") USE_PAPERWM="true";  break ;;
+            "No")  USE_PAPERWM="false"; break ;;
             *)     print_error "Invalid option. Please try again." ;;
         esac
-    done
+    done <&"${tty_fd}"
 }
 
 

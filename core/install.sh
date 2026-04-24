@@ -704,7 +704,7 @@ function _post_install() {
 
     # yazi packages
     print_info "Installing yazi packages"
-    ya pkg install
+    ya pkg install </dev/null
 
     # libvirtd (skip in minimal mode)
     if [[ "${MINIMAL_MODE}" != "true" ]]; then
