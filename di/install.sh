@@ -818,10 +818,11 @@ function _install_noctalia_ubuntu() {
     case "${codename}" in
         plucky)   noctalia_codename="plucky" ;;
         questing) noctalia_codename="questing" ;;
+        resolute) noctalia_codename="sid" ;;
         *)
             if dpkg --compare-versions "${version_id}" ge "26.04" 2>/dev/null; then
-                noctalia_codename="questing"
-                print_warning "No official noctalia build for ${codename} — using questing (Qt6 6.9)"
+                noctalia_codename="sid"
+                print_warning "No explicit noctalia build for ${codename} — using sid (Qt6 6.10)"
             else
                 print_warning "noctalia-shell requires Ubuntu 25.04+. Detected: ${codename}. Skipping."
                 return
