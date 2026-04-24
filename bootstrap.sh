@@ -41,8 +41,21 @@ function parse_arguments() {
     done
 }
 
+function _ensure_yq_ubuntu() {
+    [[ "$(detect_distro)" != "ubuntu" ]] && return
+    if [[ -z "$(yq --version 2>/dev/null | grep 'mikefarah')" ]]; then
+        print_info "Installing yq 4.x (Ubuntu ships incompatible 3.x)"
+        sudo curl -fsSL -o /usr/local/bin/yq \
+            "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
+        sudo chmod +x /usr/local/bin/yq
+        hash -r
+    fi
+}
+
 function main() {
     parse_arguments "$@"
+
+    _ensure_yq_ubuntu
 
     local distro
     local hardware

@@ -116,6 +116,16 @@ function _setup_repos() {
                 curl -sS https://downloads.1password.com/linux/keys/1password.asc \
                     | sudo gpg --dearmor --yes \
                         --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+
+                # Mozilla APT repo — native .deb Firefox and Thunderbird (no snap)
+                print_info "Adding Mozilla APT repository"
+                sudo install -d -m 0755 /etc/apt/keyrings
+                curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg \
+                    | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc >/dev/null
+                printf 'deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main\n' \
+                    | sudo tee /etc/apt/sources.list.d/mozilla.list >/dev/null
+                printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
+                    | sudo tee /etc/apt/preferences.d/mozilla >/dev/null
             fi
 
             print_info "Adding fastfetch PPA"
