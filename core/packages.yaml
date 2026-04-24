@@ -100,6 +100,7 @@ exceptions:
     - openresolv: skip
     - openssh: openssh-client openssh-server
     - openssl-devel: libssl-dev
+    - pinentry: pinentry-gnome3
     - python: python3
     - qemu: qemu-system-x86 qemu-kvm
     - thunderbird: skip       # installed separately via Mozilla APT repo

@@ -116,7 +116,7 @@ function install_package() {
             if ! dpkg -s ${package} &>/dev/null 2>&1; then
                 print_info "Installing ${package}"
                 # shellcheck disable=SC2086
-                sudo apt-get install -y ${package}
+                sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${package}
             fi
             ;;
         *)
