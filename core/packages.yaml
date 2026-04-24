@@ -77,30 +77,32 @@ packages:
 
 exceptions:
   arch:
-    bluetooth: bluez bluez-utils
-    docker: docker docker-buildx docker-compose
-    gcc-c++: gcc
-    man-db: man-db man-pages
-    openssl-devel: skip
-    qemu: qemu-full
+    - bluetooth: bluez bluez-utils
+    - docker: docker docker-buildx docker-compose
+    - gcc-c++: gcc
+    - man-db: man-db man-pages
+    - openssl-devel: skip
+    - qemu: qemu-full
 
   ubuntu:
-    yazi: skip                # installed via binary release in install_binaries()
-    cloudflared: skip
-    go: golang-go
-    gcc-c++: g++
-    python: python3
-    fd: fd-find
-    docker: docker.io docker-compose
-    libvirt: libvirt-daemon-system libvirt-clients
-    openresolv: skip
-    openssh: openssh-client openssh-server
-    openssl-devel: libssl-dev
-    ncspot: skip
-    qemu: qemu-system-x86 qemu-kvm
-    noto-fonts: fonts-noto
-    noto-fonts-cjk: fonts-noto-cjk
-    noto-fonts-emoji: fonts-noto-color-emoji
-    noto-fonts-extra: fonts-noto-extra
-    virt-install: virtinst
-    yt-dlp: skip
+    - cloudflared: skip
+    - docker: docker.io docker-compose
+    - fd: fd-find
+    - firefox: skip           # installed separately via Mozilla APT repo
+    - gcc-c++: g++
+    - go: golang-go
+    - libvirt: libvirt-daemon-system libvirt-clients
+    - ncspot: skip
+    - noto-fonts: fonts-noto
+    - noto-fonts-cjk: fonts-noto-cjk
+    - noto-fonts-emoji: fonts-noto-color-emoji
+    - noto-fonts-extra: fonts-noto-extra
+    - openresolv: skip
+    - openssh: openssh-client openssh-server
+    - openssl-devel: libssl-dev
+    - python: python3
+    - qemu: qemu-system-x86 qemu-kvm
+    - thunderbird: skip       # installed separately via Mozilla APT repo
+    - virt-install: virtinst
+    - yazi: skip              # installed via binary release in _install_binaries
+    - yt-dlp: skip            # installed via pip in _install_media_tools
