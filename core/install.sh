@@ -699,7 +699,7 @@ function _post_install() {
     # vim plugins
     if [[ -f "${HOME}/.vim/autoload/plug.vim" ]]; then
         print_info "Installing vim plugins"
-        vim +'PlugInstall --sync' +qa
+        vim +'PlugInstall --sync' +qa </dev/null
     fi
 
     # yazi packages
