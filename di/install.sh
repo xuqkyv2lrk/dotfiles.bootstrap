@@ -330,12 +330,14 @@ function _stow_di() {
     done
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
 
-    print_info "Wiring quickshell configs"
-    [[ -d "${DI_DIR}/quickshell/quickshell" ]] && \
-        stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" quickshell
-    [[ -d "${DI_DIR}/quickshell/noctalia-shell" ]] && \
-        stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" noctalia
-    git -C "${DI_DIR}/quickshell" restore */ 2>/dev/null || true
+    if [[ "${desktop_interface}" != "gnome" ]]; then
+        print_info "Wiring quickshell configs"
+        [[ -d "${DI_DIR}/quickshell/quickshell" ]] && \
+            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" quickshell
+        [[ -d "${DI_DIR}/quickshell/noctalia-shell" ]] && \
+            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" noctalia
+        git -C "${DI_DIR}/quickshell" restore */ 2>/dev/null || true
+    fi
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
         local compositor_config_dir
@@ -1090,6 +1092,11 @@ function _configure_gnome() {
     local settings_dir="${DI_DIR}/gnome/_settings"
 
     print_step "Configuring GNOME"
+
+    if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+        print_warning "No GNOME session detected — dconf settings will not be applied."
+        print_warning "Log in to GNOME and re-run: bash ~/.dotfiles.bootstrap/bootstrap.sh --no-core"
+    fi
 
     local gnome_categories=(
         "/org/gnome/desktop/interface/:interface.ini"
