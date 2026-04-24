@@ -156,16 +156,17 @@ function _install_di_deps() {
         fi
     done
 
-    # yq — Ubuntu needs a manual install
-    if ! command -v yq &>/dev/null; then
-        if [[ "${distro}" == "ubuntu" ]]; then
-            print_info "Installing yq"
+    # yq — Ubuntu ships 3.x in apt; bootstrap requires 4.x (mikefarah).
+    # Install 4.x to /usr/local/bin which takes PATH precedence over /usr/bin.
+    if [[ "${distro}" == "ubuntu" ]]; then
+        if [[ -z "$(yq --version 2>/dev/null | grep 'mikefarah')" ]]; then
+            print_info "Installing yq 4.x"
             sudo curl -fsSL -o /usr/local/bin/yq \
                 "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
             sudo chmod +x /usr/local/bin/yq
-        else
-            install_package "yq" "${distro}"
         fi
+    elif ! command -v yq &>/dev/null; then
+        install_package "yq" "${distro}"
     fi
 }
 
