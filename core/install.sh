@@ -227,8 +227,6 @@ function _install_package_core() {
 
 # _install_foot_ubuntu
 # Installs foot terminal on Ubuntu. Tries apt first, falls back to source build.
-# foot 1.17+ options are in the dotfiles — patched for Ubuntu's 1.16.x via
-# _patch_foot_config_ubuntu after stow.
 function _install_foot_ubuntu() {
     if command -v foot &>/dev/null; then
         print_info "foot already installed, skipping"
@@ -257,47 +255,6 @@ function _install_foot_ubuntu() {
     rm -rf /tmp/foot
 
     print_success "foot installed from source"
-}
-
-# _patch_foot_config_ubuntu
-# Patches foot.ini for Ubuntu's foot 1.16.x after stow.
-# foot 1.17 introduced resize-by-cells, cursor.unfocused-style, and
-# [colors-dark]/[colors-light]. Ubuntu noble ships 1.16.2 and errors on these.
-# stow symlinks ~/.config/foot — this replaces the symlink with real files so
-# patches don't propagate back to the dotfiles source.
-function _patch_foot_config_ubuntu() {
-    local foot_dir="${HOME}/.config/foot"
-    local config="${foot_dir}/foot.ini"
-    local foot_version
-    foot_version="$(foot --version 2>/dev/null | awk '{print $3}')"
-
-    local major minor
-    major="$(printf "%s" "${foot_version}" | cut -d. -f1)"
-    minor="$(printf "%s" "${foot_version}" | cut -d. -f2)"
-
-    if [[ "${major}" -gt 1 || ( "${major}" -eq 1 && "${minor}" -ge 17 ) ]]; then
-        return 0
-    fi
-
-    print_info "foot ${foot_version} detected — patching config for 1.16.x compatibility"
-
-    if [[ -L "${foot_dir}" ]]; then
-        local stow_target
-        stow_target="$(readlink -f "${foot_dir}")"
-        local tmp_dir
-        tmp_dir="$(mktemp -d)"
-        cp -a "${stow_target}/." "${tmp_dir}/"
-        rm "${foot_dir}"
-        mv "${tmp_dir}" "${foot_dir}"
-    fi
-
-    [[ -f "${config}" ]] || return 0
-
-    sed -i 's/^resize-by-cells=no/# resize-by-cells=no  # foot 1.17+; re-enable after upgrade/' "${config}"
-    sed -i 's/^unfocused-style=none/# unfocused-style=none  # foot 1.17+; re-enable after upgrade/' "${config}"
-    sed -i 's/^\[colors-dark\]/[colors] # was [colors-dark]; rename back after foot upgrade/' "${config}"
-
-    print_success "foot config patched for 1.16.x"
 }
 
 function _create_working_dirs() {
@@ -642,17 +599,8 @@ function _stow_core() {
     print_step "Wiring dotfiles.core via stow"
     cd "${CORE_DIR}"
 
-    if [[ "${distro}" == "ubuntu" ]]; then
-        local stow_pkgs
-        mapfile -t stow_pkgs < <(find . -maxdepth 1 -mindepth 1 -type d \
-            -name '[^.]*' ! -name 'foot' -printf '%f\n')
-        stow --adopt -v "${stow_pkgs[@]}"
-        git restore "${stow_pkgs[@]}"
-        _patch_foot_config_ubuntu
-    else
-        stow --adopt -v */
-        git restore */
-    fi
+    stow --adopt -v */
+    git restore */
 
     cd - >/dev/null
     print_success "dotfiles.core wired"
