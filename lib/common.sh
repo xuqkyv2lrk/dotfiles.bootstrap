@@ -102,15 +102,21 @@ function install_package() {
 
     case "${distro}" in
         arch)
-            if ! pacman -Qi "${package}" &>/dev/null; then
+            # Word-split intentional: exceptions may map to multiple packages
+            # shellcheck disable=SC2086
+            if ! pacman -Qi ${package} &>/dev/null; then
                 print_info "Installing ${package}"
-                sudo pacman -S --noconfirm --needed "${package}"
+                # shellcheck disable=SC2086
+                sudo pacman -S --noconfirm --needed ${package}
             fi
             ;;
         ubuntu)
-            if ! dpkg -l "${package}" &>/dev/null; then
+            # Word-split intentional: exceptions may map to multiple packages
+            # shellcheck disable=SC2086
+            if ! dpkg -s ${package} &>/dev/null 2>&1; then
                 print_info "Installing ${package}"
-                sudo apt-get install -y "${package}"
+                # shellcheck disable=SC2086
+                sudo apt-get install -y ${package}
             fi
             ;;
         *)
