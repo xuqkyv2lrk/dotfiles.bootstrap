@@ -534,26 +534,43 @@ function _build_libwayland_ubuntu() {
     print_success "libwayland ${wayland_ver} installed"
 }
 
+# _ubuntu_version_id
+# Returns the Ubuntu VERSION_ID (e.g. "24.04" or "26.04") from /etc/os-release.
+function _ubuntu_version_id() {
+    # shellcheck source=/dev/null
+    source /etc/os-release 2>/dev/null && printf "%s" "${VERSION_ID:-0}"
+}
+
+# _ubuntu_codename
+# Returns the Ubuntu VERSION_CODENAME from /etc/os-release.
+function _ubuntu_codename() {
+    # shellcheck source=/dev/null
+    source /etc/os-release 2>/dev/null && printf "%s" "${VERSION_CODENAME:-}"
+}
+
 # _install_niri_build_deps_ubuntu
 # Installs system packages required to build the niri stack from source.
-# Enables noble-updates if missing so -dev packages match security-patched runtimes.
+# On Ubuntu < 26.04, enables the <codename>-updates repo so -dev packages match
+# security-patched runtimes. Not needed on 26.04+ where updates ship in main.
 function _install_niri_build_deps_ubuntu() {
     print_info "Installing niri stack build dependencies"
 
-    # noble-updates must be enabled so -dev packages match their security-patched
-    # and HWE-updated runtimes. Without it apt sees noble/main -dev versions but
-    # has newer runtimes installed, causing strict = version dep failures.
-    if ! grep -rq "noble-updates" \
-            /etc/apt/sources.list \
-            /etc/apt/sources.list.d/*.list \
-            /etc/apt/sources.list.d/*.sources 2>/dev/null; then
-        print_info "noble-updates not configured — enabling it"
-        sudo tee /etc/apt/sources.list.d/noble-updates.sources >/dev/null <<'EOF'
+    local version_id codename
+    version_id="$(_ubuntu_version_id)"
+    codename="$(_ubuntu_codename)"
+
+    if dpkg --compare-versions "${version_id}" lt "26.04" 2>/dev/null; then
+        if [[ -z "$(grep -r "${codename}-updates" \
+                /etc/apt/sources.list \
+                /etc/apt/sources.list.d/ 2>/dev/null)" ]]; then
+            print_info "${codename}-updates not configured — enabling it"
+            sudo tee "/etc/apt/sources.list.d/${codename}-updates.sources" >/dev/null <<EOF
 Types: deb
 URIs: http://us.archive.ubuntu.com/ubuntu/
-Suites: noble-updates noble-backports
+Suites: ${codename}-updates ${codename}-backports
 Components: main restricted universe multiverse
 EOF
+        fi
     fi
 
     sudo apt-get update -y
@@ -767,30 +784,52 @@ function _install_pwvucontrol_ubuntu() {
     rm -rf "${build_dir}"
 }
 
+# _install_niri_from_ppa_ubuntu
+# Installs niri and dms from the avengemedia PPAs. Ubuntu 26.04+ only.
+function _install_niri_from_ppa_ubuntu() {
+    if command -v niri &>/dev/null; then
+        print_info "niri already installed, skipping"
+        return
+    fi
+    print_info "Installing niri from avengemedia PPA"
+    sudo add-apt-repository -y ppa:avengemedia/danklinux
+    sudo add-apt-repository -y ppa:avengemedia/dms
+    sudo apt-get update -y
+    sudo apt-get install -y niri dms xwayland-satellite
+    print_success "niri installed from PPA"
+}
+
 # _install_noctalia_ubuntu
 # Installs noctalia-shell (includes the quickshell runtime) from the official
 # apt repo. Requires Ubuntu 25.04+ (Qt6 >= 6.6). Warns and skips on 24.04.
+# On 26.04+ uses the questing build (Qt6 6.9) as a best-effort fallback until
+# an official 26.04 build is published.
 function _install_noctalia_ubuntu() {
     if command -v qs &>/dev/null; then
         print_info "noctalia-shell already installed, skipping"
         return
     fi
 
-    local codename
-    # shellcheck source=/dev/null
-    codename="$(source /etc/os-release && printf "%s" "${VERSION_CODENAME:-}")"
+    local codename version_id
+    codename="$(_ubuntu_codename)"
+    version_id="$(_ubuntu_version_id)"
 
     local noctalia_codename
     case "${codename}" in
         plucky)   noctalia_codename="plucky" ;;
         questing) noctalia_codename="questing" ;;
         *)
-            print_warning "noctalia-shell requires Ubuntu 25.04+. Detected: ${codename}. Skipping."
-            return
+            if dpkg --compare-versions "${version_id}" ge "26.04" 2>/dev/null; then
+                noctalia_codename="questing"
+                print_warning "No official noctalia build for ${codename} — using questing (Qt6 6.9)"
+            else
+                print_warning "noctalia-shell requires Ubuntu 25.04+. Detected: ${codename}. Skipping."
+                return
+            fi
             ;;
     esac
 
-    print_info "Installing noctalia-shell"
+    print_info "Installing noctalia-shell (${noctalia_codename})"
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://pkg.noctalia.dev/gpg.key \
         | sudo gpg --dearmor -o /etc/apt/keyrings/noctalia.gpg
@@ -802,16 +841,28 @@ function _install_noctalia_ubuntu() {
 }
 
 # _install_niri_stack_ubuntu
-# Installs the full niri stack on Ubuntu for packages not in apt.
+# Installs the full niri stack on Ubuntu.
+# On 26.04+ uses PPAs for niri/dms/xwayland-satellite; builds remaining tools
+# (cliphist, catppuccin-gtk, papirus, pwvucontrol, noctalia) the same way.
+# On 24.04 builds everything from source.
 function _install_niri_stack_ubuntu() {
-    print_step "Installing niri stack for Ubuntu"
-    _install_niri_build_deps_ubuntu
-    _build_libwayland_ubuntu
-    _build_niri_ubuntu
-    _build_xwayland_satellite_ubuntu
-    _build_wlsunset_ubuntu
+    local version_id
+    version_id="$(_ubuntu_version_id)"
+
+    if dpkg --compare-versions "${version_id}" ge "26.04" 2>/dev/null; then
+        print_step "Installing niri stack for Ubuntu 26.04+"
+        _install_niri_from_ppa_ubuntu
+    else
+        print_step "Installing niri stack for Ubuntu (build from source)"
+        _install_niri_build_deps_ubuntu
+        _build_libwayland_ubuntu
+        _build_niri_ubuntu
+        _build_xwayland_satellite_ubuntu
+        _build_wlsunset_ubuntu
+        _install_dart_sass_ubuntu
+    fi
+
     _install_cliphist_ubuntu
-    _install_dart_sass_ubuntu
     _install_catppuccin_gtk_ubuntu
     _install_papirus_catppuccin_ubuntu
     _install_pwvucontrol_ubuntu
