@@ -203,7 +203,7 @@ function system_update() {
     print_step "Updating system packages"
     case "${distro}" in
         arch)   sudo pacman -Syu --noconfirm ;;
-        ubuntu) sudo apt-get update && sudo apt-get upgrade -y ;;
+        ubuntu) sudo apt-get update && sudo apt-get upgrade -y --allow-downgrades ;;
         *)
             print_error "system_update: unsupported distro: ${distro}"
             return 1
