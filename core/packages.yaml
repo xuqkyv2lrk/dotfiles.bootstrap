@@ -102,7 +102,7 @@ exceptions:
     - openssl-devel: libssl-dev
     - pinentry: pinentry-gnome3
     - python: python3
-    - qemu: qemu-system-x86 qemu-kvm
+    - qemu: qemu-system-x86
     - thunderbird: skip       # installed separately via Mozilla APT repo
     - virt-install: virtinst
     - yazi: skip              # installed via binary release in _install_binaries
