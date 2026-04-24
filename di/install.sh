@@ -69,6 +69,12 @@ function _select_de() {
     local distro="${1}"
     local -n _de_result="${2}"
 
+    # TUI tools (vim, yazi) interact with /dev/tty and can leave a stale
+    # byte in the terminal input buffer when they exit. Drain it so the
+    # first keypress the user types is not silently discarded.
+    local _stale
+    while IFS= read -r -t 0.2 -n 1 _stale; do :; done 2>/dev/null || true
+
     if [[ "${distro}" == "ubuntu" ]]; then
         print_step "How would you like to configure your desktop?"
         printf "${TEXT}Ubuntu includes GNOME by default.${RESET}\n"
