@@ -63,7 +63,10 @@ function install_nix() {
     fi
 
     if _user_exists "${nix_user}"; then
-        print_info "User '${nix_user}' found in home/ — skipping user scaffold"
+        print_info "User '${nix_user}' found in home/ — checking imports"
+        case "${wm}" in
+            hyprland|niri|sway) _patch_user_noctalia "${nix_user}" ;;
+        esac
     else
         print_info "New user '${nix_user}' — scaffolding home config"
         _scaffold_new_user "${nix_user}" "${wm}"
@@ -96,6 +99,19 @@ function _host_exists() {
 function _user_exists() {
     local nix_user="${1}"
     [[ -f "${NIX_CLONE_DIR}/home/${nix_user}.nix" ]]
+}
+
+function _patch_user_noctalia() {
+    local nix_user="${1}"
+    local dest="${NIX_CLONE_DIR}/home/${nix_user}.nix"
+
+    if [[ -n "$(grep "noctalia" "${dest}" 2>/dev/null)" ]]; then
+        print_info "  noctalia.nix already present"
+        return
+    fi
+
+    sed -i 's|./modules/base.nix|./modules/base.nix\n    ./modules/noctalia.nix|' "${dest}"
+    print_success "Patched home/${nix_user}.nix — added missing noctalia.nix import"
 }
 
 # _scaffold_new_user
