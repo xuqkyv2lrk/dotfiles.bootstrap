@@ -54,11 +54,20 @@ function install_nix() {
 
     printf "\n"
 
+    # GPU detection
+    local gpu
+    gpu="$(detect_gpu)"
+    if [[ "${gpu}" == "nvidia" ]]; then
+        print_info "NVIDIA GPU detected — nvidia.nix module will be included"
+    else
+        print_info "No NVIDIA GPU detected — skipping nvidia.nix module"
+    fi
+
     if _host_exists "${hostname}"; then
         print_info "Host '${hostname}' found in flake.nix — skipping host scaffold"
     else
         print_info "New host '${hostname}' — scaffolding configuration"
-        _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}" "${wm}"
+        _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}" "${wm}" "${gpu}"
         _add_flake_entry "${hostname}" "${nix_user}"
     fi
 
@@ -175,11 +184,13 @@ function _copy_hardware_config() {
 #   $2 - hardware identifier
 #   $3 - username
 #   $4 - window manager (hyprland | niri | sway | none)
+#   $5 - gpu (nvidia | none)
 function _scaffold_new_host() {
     local hostname="${1}"
     local hardware="${2}"
     local nix_user="${3}"
     local wm="${4}"
+    local gpu="${5:-none}"
     local dest="${NIX_CLONE_DIR}/hosts/${hostname}/configuration.nix"
     mkdir -p "${NIX_CLONE_DIR}/hosts/${hostname}"
 
@@ -191,12 +202,15 @@ function _scaffold_new_host() {
     esac
 
     {
-        printf "{ config, lib, pkgs, inputs, ... }:\n"
+        printf "{ pkgs, ... }:\n"
         printf "{\n"
         printf "  imports = [\n"
         printf "    ./hardware-configuration.nix\n"
         if [[ -n "${hardware_import}" ]]; then
             printf "    %s\n" "${hardware_import}"
+        fi
+        if [[ "${gpu}" == "nvidia" ]]; then
+            printf "    ../../modules/nixos/hardware/nvidia.nix\n"
         fi
         printf "  ];\n\n"
         printf "  boot.loader.systemd-boot.enable = true;\n"
@@ -265,6 +279,7 @@ function _scaffold_new_host() {
     else
         print_warning "  Hardware '${hardware}' has no module — edit configuration.nix if needed"
     fi
+    [[ "${gpu}" == "nvidia" ]] && print_info "  GPU module: modules/nixos/hardware/nvidia.nix"
     case "${wm}" in
         none) print_info "  Compositor: none (headless)" ;;
         *)    print_info "  Compositor: programs.${wm}.enable" ;;

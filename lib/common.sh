@@ -40,6 +40,33 @@ function detect_distro() {
     esac
 }
 
+# detect_gpu
+# Returns: nvidia | none
+# Uses lspci (preferred) or sysfs as fallback.
+function detect_gpu() {
+    if command -v lspci &>/dev/null; then
+        if lspci 2>/dev/null | grep -qi "NVIDIA"; then
+            printf "nvidia"
+            return
+        fi
+    fi
+
+    # Fallback: walk sysfs PCI device vendor/class files
+    local vendor class
+    for vendor_file in /sys/bus/pci/devices/*/vendor; do
+        vendor="$(cat "${vendor_file}" 2>/dev/null)"
+        class_file="${vendor_file%vendor}class"
+        class="$(cat "${class_file}" 2>/dev/null)"
+        # Vendor 0x10de = NVIDIA; class 0x03xx = display controller
+        if [[ "${vendor}" == "0x10de" && "${class}" == 0x03* ]]; then
+            printf "nvidia"
+            return
+        fi
+    done
+
+    printf "none"
+}
+
 # detect_hardware
 # Returns: ThinkPad T480s | ROG | XPS 13 9350 | unknown
 function detect_hardware() {
