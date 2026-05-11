@@ -212,6 +212,7 @@ function _scaffold_new_host() {
         if [[ "${gpu}" == "nvidia" ]]; then
             printf "    ../../modules/nixos/hardware/nvidia.nix\n"
         fi
+        printf "    ../../modules/nixos/audio.nix\n"
         printf "  ];\n\n"
         printf "  boot.loader.systemd-boot.enable = true;\n"
         printf "  boot.loader.systemd-boot.configurationLimit = 5;\n"
@@ -222,15 +223,6 @@ function _scaffold_new_host() {
         printf "  networking.hostName = \"%s\";\n" "${hostname}"
         printf "  networking.networkmanager.enable = true;\n\n"
         printf "  time.timeZone = \"America/New_York\";\n\n"
-        printf "  services.pulseaudio.enable = false;\n"
-        printf "  security.rtkit.enable = true;\n"
-        printf "  services.pipewire = {\n"
-        printf "    enable = true;\n"
-        printf "    alsa.enable = true;\n"
-        printf "    alsa.support32Bit = true;\n"
-        printf "    pulse.enable = true;\n"
-        printf "    jack.enable = true;\n"
-        printf "  };\n\n"
         printf "  services.libinput.enable = true;\n"
         printf "  services.printing.enable = true;\n"
         printf "  services.openssh.enable = true;\n"
