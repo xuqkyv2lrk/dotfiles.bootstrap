@@ -292,7 +292,7 @@ function _add_flake_entry() {
     tmp_file="$(mktemp)"
 
     local entry
-    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        ./hosts/%s/configuration.nix\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
+    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        ./hosts/%s/configuration.nix\n        ./modules/nixos/sddm.nix\n        ./modules/nixos/plymouth.nix\n        silentsddm.nixosModules.default\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
         "${hostname}" "${hostname}" "${nix_user}" "${nix_user}")"
 
     # Insert entry before the last '  };' in the file (closes the outputs block)
