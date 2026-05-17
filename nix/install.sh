@@ -206,6 +206,7 @@ function _scaffold_new_host() {
         printf "{\n"
         printf "  imports = [\n"
         printf "    ./hardware-configuration.nix\n"
+        printf "    ../../modules/nixos/common.nix\n"
         if [[ -n "${hardware_import}" ]]; then
             printf "    %s\n" "${hardware_import}"
         fi
@@ -246,7 +247,7 @@ function _scaffold_new_host() {
         printf "  nixpkgs.config.allowUnfree = true;\n\n"
         printf "  users.users.%s = {\n" "${nix_user}"
         printf "    isNormalUser = true;\n"
-        printf "    extraGroups  = [ \"wheel\" \"networkmanager\" \"video\" \"audio\" \"libvirtd\" ];\n"
+        printf "    extraGroups  = [ \"wheel\" \"networkmanager\" \"video\" \"audio\" \"libvirtd\" \"dialout\" ];\n"
         printf "    shell        = pkgs.zsh;\n"
         printf "  };\n\n"
         printf "  environment.systemPackages = with pkgs; [ vim git wget curl pciutils ];\n\n"
