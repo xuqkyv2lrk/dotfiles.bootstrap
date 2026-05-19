@@ -68,7 +68,7 @@ function install_nix() {
     else
         print_info "New host '${hostname}' — scaffolding configuration"
         _scaffold_new_host "${hostname}" "${hardware}" "${nix_user}" "${wm}" "${gpu}"
-        _add_flake_entry "${hostname}" "${nix_user}"
+        _add_flake_entry "${hostname}" "${nix_user}" "${wm}"
     fi
 
     if _user_exists "${nix_user}"; then
@@ -216,7 +216,6 @@ function _scaffold_new_host() {
         printf "    ../../modules/nixos/audio.nix\n"
         printf "  ];\n\n"
         printf "  boot.loader.systemd-boot.enable = true;\n"
-        printf "  boot.loader.systemd-boot.configurationLimit = 5;\n"
         printf "  boot.loader.efi.canTouchEfiVariables = true;\n"
         printf "  boot.kernelPackages = pkgs.linuxPackages_latest;\n\n"
         printf "  services.btrfs.autoScrub.enable = true;\n\n"
@@ -252,15 +251,6 @@ function _scaffold_new_host() {
         printf "  };\n\n"
         printf "  environment.systemPackages = with pkgs; [ vim git wget curl pciutils ];\n\n"
         printf "  programs.zsh.enable = true;\n\n"
-        printf "  nix.settings = {\n"
-        printf "    experimental-features = [ \"nix-command\" \"flakes\" ];\n"
-        printf "    auto-optimise-store   = true;\n"
-        printf "  };\n\n"
-        printf "  nix.gc = {\n"
-        printf "    automatic = true;\n"
-        printf "    dates     = \"weekly\";\n"
-        printf "    options   = \"--delete-older-than 7d\";\n"
-        printf "  };\n\n"
         printf "  # First NixOS version installed on this machine — do not change.\n"
         printf "  system.stateVersion = \"25.11\";\n"
         printf "}\n"
@@ -285,16 +275,23 @@ function _scaffold_new_host() {
 # Parameters:
 #   $1 - hostname
 #   $2 - username
+#   $3 - window manager (hyprland | niri | sway | gnome | gnome-paperwm | none)
 function _add_flake_entry() {
     local hostname="${1}"
     local nix_user="${2}"
+    local wm="${3}"
     local flake_file="${NIX_CLONE_DIR}/flake.nix"
     local tmp_file
     tmp_file="$(mktemp)"
 
+    local noctalia_line=""
+    case "${wm}" in
+        hyprland|niri|sway) noctalia_line=$'\n        ./modules/nixos/noctalia.nix' ;;
+    esac
+
     local entry
-    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        ./hosts/%s/configuration.nix\n        ./modules/nixos/sddm.nix\n        ./modules/nixos/plymouth.nix\n        silentsddm.nixosModules.default\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
-        "${hostname}" "${hostname}" "${nix_user}" "${nix_user}")"
+    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        { nixpkgs.overlays = [ overlay ]; }\n        ./hosts/%s/configuration.nix\n        ./modules/nixos/common.nix\n        ./modules/nixos/nix.nix\n        ./modules/nixos/sddm.nix%s\n        silentsddm.nixosModules.default\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
+        "${hostname}" "${hostname}" "${noctalia_line}" "${nix_user}" "${nix_user}")"
 
     # Insert entry before the last '  };' in the file (closes the outputs block)
     awk -v entry="${entry}" '
