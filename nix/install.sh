@@ -76,9 +76,10 @@ function install_nix() {
         case "${wm}" in
             hyprland|niri|sway) _patch_user_noctalia "${nix_user}" ;;
         esac
+        [[ "${gpu}" == "nvidia" ]] && _patch_user_nvidia "${nix_user}"
     else
         print_info "New user '${nix_user}' — scaffolding home config"
-        _scaffold_new_user "${nix_user}" "${wm}"
+        _scaffold_new_user "${nix_user}" "${wm}" "${gpu}"
     fi
 
     _copy_hardware_config "${hostname}"
@@ -123,14 +124,29 @@ function _patch_user_noctalia() {
     print_success "Patched home/${nix_user}.nix — added missing noctalia.nix import"
 }
 
+function _patch_user_nvidia() {
+    local nix_user="${1}"
+    local dest="${NIX_CLONE_DIR}/home/${nix_user}.nix"
+
+    if [[ -n "$(grep "nvidia" "${dest}" 2>/dev/null)" ]]; then
+        print_info "  nvidia.nix already present"
+        return
+    fi
+
+    sed -i 's|^  \];|    ./modules/nvidia.nix\n  ];|' "${dest}"
+    print_success "Patched home/${nix_user}.nix — added nvidia.nix import"
+}
+
 # _scaffold_new_user
 # Generates home/<user>.nix with the appropriate module imports for the selected DE/WM.
 # Parameters:
 #   $1 - username
 #   $2 - desktop (hyprland | niri | sway | gnome | gnome-paperwm | none)
+#   $3 - gpu (nvidia | none)
 function _scaffold_new_user() {
     local nix_user="${1}"
     local wm="${2}"
+    local gpu="${3:-none}"
     local dest="${NIX_CLONE_DIR}/home/${nix_user}.nix"
 
     {
@@ -151,6 +167,7 @@ function _scaffold_new_user() {
                 printf "    ./modules/paperwm.nix\n"
                 ;;
         esac
+        [[ "${gpu}" == "nvidia" ]] && printf "    ./modules/nvidia.nix\n"
         printf "  ];\n\n"
         printf "  home.username      = \"%s\";\n" "${nix_user}"
         printf "  home.homeDirectory = \"/home/%s\";\n" "${nix_user}"
@@ -159,12 +176,14 @@ function _scaffold_new_user() {
     } > "${dest}"
 
     print_success "Scaffolded home/${nix_user}.nix"
+    local imports="base.nix"
     case "${wm}" in
-        hyprland|niri|sway) print_info "  imports: base.nix, noctalia.nix, ${wm}.nix" ;;
-        gnome)               print_info "  imports: base.nix, gnome.nix" ;;
-        gnome-paperwm)       print_info "  imports: base.nix, gnome.nix, paperwm.nix" ;;
-        none)                print_info "  imports: base.nix (headless)" ;;
+        hyprland|niri|sway) imports="base.nix, noctalia.nix, ${wm}.nix" ;;
+        gnome)               imports="base.nix, gnome.nix" ;;
+        gnome-paperwm)       imports="base.nix, gnome.nix, paperwm.nix" ;;
     esac
+    [[ "${gpu}" == "nvidia" ]] && imports="${imports}, nvidia.nix"
+    print_info "  imports: ${imports}"
 }
 
 function _copy_hardware_config() {
