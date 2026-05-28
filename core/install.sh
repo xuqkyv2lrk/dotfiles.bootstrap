@@ -297,14 +297,6 @@ function _install_binaries() {
         curl -s --location https://git.io/JYfAY | bash
     fi
 
-    # diff-so-fancy
-    if ! command -v diff-so-fancy &>/dev/null; then
-        print_info "Installing diff-so-fancy"
-        git clone https://github.com/so-fancy/diff-so-fancy.git /tmp/diff-so-fancy
-        sudo cp /tmp/diff-so-fancy/diff-so-fancy /usr/local/bin/
-        sudo cp -r /tmp/diff-so-fancy/lib /usr/local/bin/
-        rm -rf /tmp/diff-so-fancy
-    fi
 
     # oh-my-posh
     if ! command -v oh-my-posh &>/dev/null; then
