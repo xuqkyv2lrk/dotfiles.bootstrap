@@ -37,6 +37,8 @@ packages:
   - bat
   - direnv
   - eza
+  - mise
+  - uv
   - fastfetch
   - fd
   - fzf
@@ -105,5 +107,7 @@ exceptions:
     - qemu: qemu-system-x86
     - thunderbird: skip       # installed separately via Mozilla APT repo
     - virt-install: virtinst
+    - mise: skip              # installed via installer script in _install_binaries
+    - uv: skip                # installed via installer script in _install_binaries
     - yazi: skip              # installed via binary release in _install_binaries
     - yt-dlp: skip            # installed via pip in _install_media_tools

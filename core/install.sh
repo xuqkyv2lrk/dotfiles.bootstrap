@@ -274,7 +274,7 @@ function _create_working_dirs() {
         fi
     done
 
-    export PATH="${HOME}/bin:${HOME}/.emacs.d/bin:${HOME}/.atuin/bin:${PATH}"
+    export PATH="${HOME}/bin:${HOME}/.local/bin:${HOME}/.emacs.d/bin:${HOME}/.atuin/bin:${PATH}"
 }
 
 # _install_binaries
@@ -368,6 +368,18 @@ function _install_binaries() {
     if ! command -v talosctl &>/dev/null; then
         print_info "Installing talosctl"
         curl -sL https://talos.dev/install | sh
+    fi
+
+    # mise
+    if ! command -v mise &>/dev/null; then
+        print_info "Installing mise"
+        curl -fsSL https://mise.run | sh
+    fi
+
+    # uv
+    if ! command -v uv &>/dev/null; then
+        print_info "Installing uv"
+        curl -LsSf https://astral.sh/uv/install.sh | sh
     fi
 
     # doom emacs
