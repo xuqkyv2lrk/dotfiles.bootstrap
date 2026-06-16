@@ -309,7 +309,7 @@ function _add_flake_entry() {
     esac
 
     local entry
-    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        { nixpkgs.overlays = [ overlay ]; }\n        ./hosts/%s/configuration.nix\n        ./modules/nixos/common.nix\n        ./modules/nixos/nix.nix\n        ./modules/nixos/sddm.nix%s\n        silentsddm.nixosModules.default\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs   = true;\n          home-manager.useUserPackages = true;\n          home-manager.users.%s = import ./home/%s.nix;\n        }\n      ];\n    };' \
+    entry="$(printf '    nixosConfigurations.%s = nixpkgs.lib.nixosSystem {\n      system = "x86_64-linux";\n      specialArgs = { inherit inputs; };\n      modules = [\n        { nixpkgs.overlays = [ overlay ]; }\n        ./hosts/%s/configuration.nix\n        ./modules/nixos/common.nix\n        ./modules/nixos/nix.nix\n        ./modules/nixos/sddm.nix%s\n        silentsddm.nixosModules.default\n        home-manager.nixosModules.home-manager\n        {\n          home-manager.useGlobalPkgs       = true;\n          home-manager.useUserPackages     = true;\n          home-manager.backupFileExtension = "backup";\n          home-manager.users.%s           = import ./home/%s.nix;\n        }\n      ];\n    };' \
         "${hostname}" "${hostname}" "${noctalia_line}" "${nix_user}" "${nix_user}")"
 
     # Insert entry before the last '  };' in the file (closes the outputs block)
@@ -354,20 +354,23 @@ function _run_nixos_install() {
     print_step "Setting password for ${nix_user}"
     nixos-enter --root /mnt -- passwd "${nix_user}"
 
-    # Pre-clone dotfiles repos so home-manager activation succeeds on first boot
-    # without depending on network timing. The activation scripts skip clones when
-    # the directories already exist.
-    local installed_home_inner="/home/${nix_user}"
-    print_step "Pre-cloning dotfiles repos into installed system"
-
-    nixos-enter --root /mnt -- \
-        su - "${nix_user}" -c "
-            git clone https://gitlab.com/wd2nf8gqct/dotfiles.core.git \
-                ${installed_home_inner}/.dotfiles.core
-            git clone --recurse-submodules \
-                https://gitlab.com/wd2nf8gqct/dotfiles.di.git \
-                ${installed_home_inner}/.dotfiles.di
-        " || print_warning "Pre-clone failed — home-manager will retry on first boot"
+    # Run home-manager activation inside the chroot while the installer still has
+    # network. This ensures the desktop is fully configured on first boot — no
+    # post-reboot rebuild required.
+    print_step "Running home-manager activation for ${nix_user}"
+    local hm_unit="/mnt/etc/systemd/system/home-manager-${nix_user}.service"
+    if [[ -f "${hm_unit}" ]]; then
+        local exec_start
+        exec_start="$(grep '^ExecStart=' "${hm_unit}" | cut -d= -f2-)"
+        if [[ -n "${exec_start}" ]]; then
+            nixos-enter --root /mnt -- bash -c "${exec_start}" \
+                || print_warning "Home-manager pre-activation failed — run nixos-rebuild after first boot"
+        else
+            print_warning "Could not parse ExecStart from ${hm_unit}"
+        fi
+    else
+        print_warning "home-manager-${nix_user}.service not found — run nixos-rebuild after first boot"
+    fi
 
     # Preserve the repo into the installed system so it survives the reboot
     # and any scaffolded or updated files are ready to commit.
