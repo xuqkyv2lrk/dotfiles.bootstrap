@@ -230,7 +230,7 @@ function _configure_pre_install() {
         gnome)
             mkdir -p "${HOME}/.local/share/gnome-shell"
             ;;
-        hyprland|niri|sway)
+        hyprland|niri|sway|river)
             if [[ "${desktop_interface}" == "sway" ]]; then
                 print_info "Installing swaysome"
                 cargo install --locked --root "${HOME}" swaysome
@@ -382,6 +382,12 @@ function _generate_autostart() {
                 printf 'lxqt-policykit-agent &\n'
                 printf '/usr/bin/xdg-user-dirs-update &\n'
                 printf '/usr/libexec/sway-systemd/wait-sni-ready && systemctl --user start sway-xdg-autostart.target\n'
+                ;;
+            river)
+                printf 'lxqt-policykit-agent &\n'
+                printf '/usr/lib/xdg-desktop-portal-gtk &\n'
+                printf '/usr/lib/xdg-desktop-portal-wlr &\n'
+                printf 'kanshi &\n'
                 ;;
         esac
 
@@ -1073,11 +1079,12 @@ function _configure_desktop_interface() {
     dconf write /org/gnome/desktop/interface/color-scheme "'prefer-dark'" 2>/dev/null || true
 
     case "${desktop_interface}" in
-        gnome)  _configure_gnome "${distro}" "${scale_factor}" ;;
+        gnome)    _configure_gnome "${distro}" "${scale_factor}" ;;
         hyprland) _configure_hyprland ;;
-        niri)   _configure_niri ;;
-        sway)   _configure_sway ;;
-        *)      print_error "Unsupported desktop interface: ${desktop_interface}" ;;
+        niri)     _configure_niri ;;
+        sway)     _configure_sway ;;
+        river)    _configure_river ;;
+        *)        print_error "Unsupported desktop interface: ${desktop_interface}" ;;
     esac
 }
 
@@ -1320,5 +1327,9 @@ function _configure_niri() {
 }
 
 function _configure_sway() {
+    :
+}
+
+function _configure_river() {
     :
 }

@@ -142,7 +142,7 @@ function _patch_user_nvidia() {
 # Generates home/<user>.nix with the appropriate module imports for the selected DE/WM.
 # Parameters:
 #   $1 - username
-#   $2 - desktop (hyprland | niri | sway | gnome | gnome-paperwm | none)
+#   $2 - desktop (hyprland | niri | sway | river | gnome | gnome-paperwm | none)
 #   $3 - gpu (nvidia | none)
 function _scaffold_new_user() {
     local nix_user="${1}"
@@ -203,7 +203,7 @@ function _copy_hardware_config() {
 #   $1 - hostname
 #   $2 - hardware identifier
 #   $3 - username
-#   $4 - window manager (hyprland | niri | sway | none)
+#   $4 - window manager (hyprland | niri | sway | river | none)
 #   $5 - gpu (nvidia | none)
 function _scaffold_new_host() {
     local hostname="${1}"
@@ -296,7 +296,7 @@ function _scaffold_new_host() {
 # Parameters:
 #   $1 - hostname
 #   $2 - username
-#   $3 - window manager (hyprland | niri | sway | gnome | gnome-paperwm | none)
+#   $3 - window manager (hyprland | niri | sway | river | gnome | gnome-paperwm | none)
 function _add_flake_entry() {
     local hostname="${1}"
     local nix_user="${2}"

@@ -102,6 +102,31 @@ desktop_packages:
     - wlsunset
     - xdg-desktop-portal-gtk
     - xorg-xwayland
+  river:
+    - catppuccin-gtk-theme-mocha
+    - cliphist
+    - dart-sass
+    - gnome-keyring
+    - gnome-themes-extra
+    - grim
+    - gtk-engine-murrine
+    - kanshi
+    - nautilus
+    - pamixer
+    - papirus-folders-catppuccin-git
+    - papirus-icon-theme
+    - lxqt-policykit
+    - polkit
+    - pwvucontrol
+    - river
+    - sassc
+    - slurp
+    - swappy
+    - wl-clipboard
+    - wlsunset
+    - xdg-desktop-portal-gtk
+    - xdg-desktop-portal-wlr
+    - xorg-xwayland
 
   quickshell:
     - cava
