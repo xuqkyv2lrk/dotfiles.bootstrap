@@ -40,11 +40,12 @@ function install_nix() {
     # WM selection
     local wm
     print_step "Select a desktop environment or window manager:"
-    select wm_choice in "Hyprland" "Niri" "Sway" "GNOME" "GNOME + PaperWM" "None (headless/server)"; do
+    select wm_choice in "Hyprland" "Niri" "Sway" "River" "GNOME" "GNOME + PaperWM" "None (headless/server)"; do
         case "${wm_choice}" in
             "Hyprland")               wm="hyprland";      break ;;
             "Niri")                   wm="niri";           break ;;
             "Sway")                   wm="sway";           break ;;
+            "River")                  wm="river";          break ;;
             "GNOME")                  wm="gnome";          break ;;
             "GNOME + PaperWM")        wm="gnome-paperwm";  break ;;
             "None (headless/server)") wm="none";           break ;;
@@ -74,7 +75,7 @@ function install_nix() {
     if _user_exists "${nix_user}"; then
         print_info "User '${nix_user}' found in home/ — checking imports"
         case "${wm}" in
-            hyprland|niri|sway) _patch_user_noctalia "${nix_user}" ;;
+            hyprland|niri|sway|river) _patch_user_noctalia "${nix_user}" ;;
         esac
         [[ "${gpu}" == "nvidia" ]] && _patch_user_nvidia "${nix_user}"
     else
@@ -155,7 +156,7 @@ function _scaffold_new_user() {
         printf "  imports = [\n"
         printf "    ./modules/base.nix\n"
         case "${wm}" in
-            hyprland|niri|sway)
+            hyprland|niri|sway|river)
                 printf "    ./modules/noctalia.nix\n"
                 printf "    ./modules/%s.nix\n" "${wm}"
                 ;;
@@ -178,7 +179,7 @@ function _scaffold_new_user() {
     print_success "Scaffolded home/${nix_user}.nix"
     local imports="base.nix"
     case "${wm}" in
-        hyprland|niri|sway) imports="base.nix, noctalia.nix, ${wm}.nix" ;;
+        hyprland|niri|sway|river) imports="base.nix, noctalia.nix, ${wm}.nix" ;;
         gnome)               imports="base.nix, gnome.nix" ;;
         gnome-paperwm)       imports="base.nix, gnome.nix, paperwm.nix" ;;
     esac
@@ -258,6 +259,7 @@ function _scaffold_new_host() {
             hyprland) printf "  programs.hyprland.enable = true;\n\n" ;;
             niri)     printf "  programs.niri.enable = true;\n\n" ;;
             sway)     printf "  programs.sway.enable = true;\n\n" ;;
+            river)    printf "  programs.river.enable = true;\n\n" ;;
         esac
         printf "  virtualisation.docker    = { enable = true; enableOnBoot = true; };\n"
         printf "  virtualisation.libvirtd.enable = true;\n"
@@ -305,7 +307,7 @@ function _add_flake_entry() {
 
     local noctalia_line=""
     case "${wm}" in
-        hyprland|niri|sway) noctalia_line=$'\n        ./modules/nixos/noctalia.nix' ;;
+        hyprland|niri|sway|river) noctalia_line=$'\n        ./modules/nixos/noctalia.nix' ;;
     esac
 
     local entry
