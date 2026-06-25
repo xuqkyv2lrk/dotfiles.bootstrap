@@ -259,7 +259,7 @@ function _scaffold_new_host() {
             hyprland) printf "  programs.hyprland.enable = true;\n\n" ;;
             niri)     printf "  programs.niri.enable = true;\n\n" ;;
             sway)     printf "  programs.sway.enable = true;\n\n" ;;
-            river)    printf "  programs.river.enable = true;\n\n" ;;
+            river)    printf "  programs.river-classic.enable = true;\n\n" ;;
         esac
         printf "  virtualisation.docker    = { enable = true; enableOnBoot = true; };\n"
         printf "  virtualisation.libvirtd.enable = true;\n"
