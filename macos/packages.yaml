@@ -51,6 +51,7 @@ packages:
   - qemu
   - macmon
   - sketchybar
+  - borders
 
 casks:
   - 1password
