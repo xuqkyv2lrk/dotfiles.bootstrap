@@ -21,8 +21,13 @@ function print_step()    { printf "${MAUVE}==>${RESET} %s\n" "$*"; }
 function print_dry_run() { printf "${TEAL}[DRY-RUN]${RESET} %s\n" "$*"; }
 
 # detect_distro
-# Returns: arch | ubuntu | nixos | unsupported | unknown
+# Returns: arch | ubuntu | nixos | macos | unsupported | unknown
 function detect_distro() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        printf "macos"
+        return
+    fi
+
     if [[ ! -f "/etc/os-release" ]]; then
         printf "unknown"
         return
@@ -68,8 +73,13 @@ function detect_gpu() {
 }
 
 # detect_hardware
-# Returns: ThinkPad T480s | ROG | XPS 13 9350 | unknown
+# Returns: ThinkPad T480s | ROG | XPS 13 9350 | Apple Silicon | unknown
 function detect_hardware() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        printf "Apple Silicon"
+        return
+    fi
+
     local system_version="" system_product=""
 
     # Prefer sysfs — always available, no dmidecode needed (critical on NixOS installer ISO)
@@ -144,6 +154,12 @@ function install_package() {
                 print_info "Installing ${package}"
                 # shellcheck disable=SC2086
                 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${package}
+            fi
+            ;;
+        macos)
+            if ! brew list "${package}" &>/dev/null 2>&1; then
+                print_info "Installing ${package}"
+                brew install "${package}"
             fi
             ;;
         *)
@@ -237,6 +253,7 @@ function system_update() {
     case "${distro}" in
         arch)   sudo pacman -Syu --noconfirm ;;
         ubuntu) sudo apt-get update && sudo apt-get upgrade -y --allow-downgrades ;;
+        macos)  brew update && brew upgrade ;;
         *)
             print_error "system_update: unsupported distro: ${distro}"
             return 1

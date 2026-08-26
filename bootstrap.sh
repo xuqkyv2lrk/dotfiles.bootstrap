@@ -82,6 +82,11 @@ function main() {
             source "${SCRIPT_DIR}/nix/install.sh"
             install_nix "${hardware}"
             ;;
+        macos)
+            # shellcheck source=macos/install.sh
+            source "${SCRIPT_DIR}/macos/install.sh"
+            install_macos "${hardware}"
+            ;;
         unsupported|unknown)
             print_error "Unsupported distro: ${distro}"
             exit 1

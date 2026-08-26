@@ -1,0 +1,67 @@
+packages:
+  - bat
+  - bc
+  - btop
+  - cava
+  - cmake
+  - cloudflared
+  - curl
+  - direnv
+  - emacs
+  - eza
+  - fastfetch
+  - fd
+  - ffmpeg
+  - fzf
+  - git-delta
+  - glow
+  - gnupg
+  - go
+  - graphviz
+  - imagemagick
+  - jq
+  - kubectl
+  - meson
+  - mise
+  - mpc
+  - mpd
+  - ncmpcpp
+  - ncspot
+  - nodejs
+  - openssl
+  - pandoc
+  - pinentry
+  - python
+  - ripgrep
+  - rsync
+  - shellcheck
+  - stow
+  - tmux
+  - unzip
+  - uv
+  - vim
+  - wget
+  - wireguard-tools
+  - yazi
+  - yq
+  - zoxide
+  - zsh
+  - dnsmasq
+  - gnupg
+  - qemu
+
+casks:
+  - 1password
+  - bitwarden
+  - docker
+  - firefox
+  - mpv
+  - thunderbird
+
+exceptions:
+  macos:
+    - nodejs: node
+    - openssl: openssl@3
+    - pinentry: pinentry-mac
+    - python: python3
+    - git-delta: git-delta
