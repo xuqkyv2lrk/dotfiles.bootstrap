@@ -49,6 +49,7 @@ packages:
   - dnsmasq
   - gnupg
   - qemu
+  - macmon
   - sketchybar
 
 casks:
