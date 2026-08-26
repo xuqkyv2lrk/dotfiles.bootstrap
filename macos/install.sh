@@ -24,6 +24,7 @@ function install_macos() {
 
     _install_homebrew
     _setup_taps
+    _install_gnu_tools
     system_update "macos"
     _clone_core
     _clone_utility_scripts
@@ -57,6 +58,52 @@ function _setup_taps() {
     brew tap fluxcd/tap
     brew tap siderolabs/tap
     brew tap jandedobbeleer/oh-my-posh
+}
+
+# _install_gnu_tools
+# Installs GNU coreutils, findutils, sed, grep, and awk to replace the BSD
+# versions shipped with macOS. Prepends the gnubin paths to PATH so scripts
+# get predictable GNU behaviour without requiring g-prefixed commands.
+function _install_gnu_tools() {
+    print_step "Installing GNU userland tools"
+
+    local gnu_packages=(
+        coreutils   # GNU ls, cp, mv, etc  → /opt/homebrew/opt/coreutils/libexec/gnubin
+        findutils   # GNU find, xargs      → /opt/homebrew/opt/findutils/libexec/gnubin
+        gnu-sed     # GNU sed              → /opt/homebrew/opt/gnu-sed/libexec/gnubin
+        grep        # GNU grep             → /opt/homebrew/opt/grep/libexec/gnubin
+        gawk        # GNU awk              → /opt/homebrew/opt/gawk/libexec/gnubin
+    )
+
+    local pkg
+    for pkg in "${gnu_packages[@]}"; do
+        install_package "${pkg}" "macos"
+    done
+
+    # Prepend all gnubin dirs so GNU tools shadow BSD ones in this session
+    local gnubin_dirs=(
+        "/opt/homebrew/opt/coreutils/libexec/gnubin"
+        "/opt/homebrew/opt/findutils/libexec/gnubin"
+        "/opt/homebrew/opt/gnu-sed/libexec/gnubin"
+        "/opt/homebrew/opt/grep/libexec/gnubin"
+        "/opt/homebrew/opt/gawk/libexec/gnubin"
+    )
+
+    local dir
+    for dir in "${gnubin_dirs[@]}"; do
+        [[ -d "${dir}" ]] && export PATH="${dir}:${PATH}"
+    done
+
+    # Persist the gnubin entries in .zshenv so future shells pick them up
+    local zshenv="${HOME}/.zshenv"
+    if [[ -z "$(grep "gnubin" "${zshenv}" 2>/dev/null)" ]]; then
+        printf '\n# GNU userland (replaces macOS BSD tools)\n' >> "${zshenv}"
+        for dir in "${gnubin_dirs[@]}"; do
+            printf 'path=("%s" $path)\n' "${dir}" >> "${zshenv}"
+        done
+    fi
+
+    print_success "GNU tools installed and prepended to PATH"
 }
 
 function _clone_core() {
