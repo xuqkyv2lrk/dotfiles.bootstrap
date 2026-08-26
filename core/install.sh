@@ -377,7 +377,7 @@ function _install_binaries() {
     # doom emacs
     if ! command -v doom &>/dev/null; then
         print_info "Installing doom emacs"
-        git clone --depth 1 https://github.com/doomemacs/doomemacs "${HOME}/.emacs.d"
+        git clone --depth 1 --branch v2.1.1 https://github.com/doomemacs/doomemacs "${HOME}/.emacs.d"
     fi
 }
 
