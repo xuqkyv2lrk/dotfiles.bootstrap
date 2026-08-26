@@ -388,6 +388,25 @@ function _install_binaries() {
             fc-cache -f "${HOME}/.fonts" || true
         fi
     fi
+
+    # glow config — write glow.yml with absolute path, symlink theme from dotfiles.core
+    if [[ -d "${HOME}/.dotfiles.core/glow/.config/glow" ]]; then
+        mkdir -p "${HOME}/.config/glow"
+        if [[ ! -f "${HOME}/.config/glow/glow.yml" ]]; then
+            print_info "Installing glow config"
+            cat > "${HOME}/.config/glow/glow.yml" <<EOF
+style: "${HOME}/.config/glow/catppuccin-mocha.json"
+mouse: false
+pager: false
+width: 80
+all: false
+EOF
+        fi
+        if [[ ! -L "${HOME}/.config/glow/catppuccin-mocha.json" ]]; then
+            ln -sf "${HOME}/.dotfiles.core/glow/.config/glow/catppuccin-mocha.json" \
+                "${HOME}/.config/glow/catppuccin-mocha.json"
+        fi
+    fi
 }
 
 function _install_rust() {
