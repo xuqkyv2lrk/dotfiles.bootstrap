@@ -379,6 +379,15 @@ function _install_binaries() {
         print_info "Installing doom emacs"
         git clone --depth 1 --branch v2.1.1 https://github.com/doomemacs/doomemacs "${HOME}/.emacs.d"
     fi
+
+    # custom fonts from dotfiles.core
+    if [[ -d "${HOME}/.dotfiles.core/fonts/.fonts" ]]; then
+        if [[ ! -L "${HOME}/.fonts" ]]; then
+            print_info "Installing fonts"
+            ln -sf "${HOME}/.dotfiles.core/fonts/.fonts" "${HOME}/.fonts"
+            fc-cache -f "${HOME}/.fonts" || true
+        fi
+    fi
 }
 
 function _install_rust() {
