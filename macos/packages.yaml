@@ -49,12 +49,16 @@ packages:
   - dnsmasq
   - gnupg
   - qemu
+  - sketchybar
 
 casks:
   - 1password
+  - aerospace
   - bitwarden
   - docker
   - firefox
+  - ghostty
+  - karabiner-elements
   - mpv
   - thunderbird
 

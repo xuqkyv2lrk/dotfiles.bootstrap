@@ -4,6 +4,7 @@
 # Sourced by bootstrap.sh — do not execute directly.
 
 readonly CORE_DIR="${HOME}/.dotfiles.core"
+readonly DI_DIR="${HOME}/.dotfiles.di"
 readonly MACOS_PACKAGES_YAML="${SCRIPT_DIR}/macos/packages.yaml"
 readonly UTILITY_SCRIPTS_DIR="${HOME}/utility-scripts"
 
@@ -27,6 +28,7 @@ function install_macos() {
     _install_gnu_tools
     system_update "macos"
     _clone_core
+    _clone_di
     _clone_utility_scripts
     _install_macos_packages
     _create_working_dirs
@@ -34,6 +36,7 @@ function install_macos() {
     _install_rust
     _install_media_tools_macos
     _stow_core
+    _stow_di_macos
     _install_tmux_plugins
     _post_install_macos
 
@@ -58,6 +61,8 @@ function _setup_taps() {
     brew tap fluxcd/tap
     brew tap siderolabs/tap
     brew tap jandedobbeleer/oh-my-posh
+    brew tap nikitabobko/tap        # aerospace
+    brew tap FelixKratz/formulae    # sketchybar
 }
 
 # _install_gnu_tools
@@ -112,6 +117,15 @@ function _clone_core() {
         git clone "https://gitlab.com/wd2nf8gqct/dotfiles.core.git" "${CORE_DIR}"
     else
         print_info "dotfiles.core already present, skipping clone"
+    fi
+}
+
+function _clone_di() {
+    if [[ ! -d "${DI_DIR}" ]]; then
+        print_info "Cloning dotfiles.di"
+        git clone "https://gitlab.com/wd2nf8gqct/dotfiles.di.git" "${DI_DIR}"
+    else
+        print_info "dotfiles.di already present, skipping clone"
     fi
 }
 
@@ -290,6 +304,22 @@ function _stow_core() {
     git restore */
     cd - >/dev/null
     print_success "dotfiles.core wired"
+}
+
+# _stow_di_macos
+# Wires macOS-specific configs from dotfiles.di (aerospace, sketchybar).
+function _stow_di_macos() {
+    if [[ ! -d "${DI_DIR}/macos" ]]; then
+        print_warning "dotfiles.di/macos not found, skipping di stow"
+        return
+    fi
+
+    print_step "Wiring dotfiles.di/macos via stow"
+    cd "${DI_DIR}/macos"
+    stow --adopt -v */
+    git restore */
+    cd - >/dev/null
+    print_success "dotfiles.di/macos wired (aerospace, sketchybar)"
 }
 
 function _install_tmux_plugins() {
