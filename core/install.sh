@@ -374,6 +374,20 @@ function _install_binaries() {
         curl -LsSf https://astral.sh/uv/install.sh | sh
     fi
 
+    # glow
+    if ! command -v glow &>/dev/null; then
+        print_info "Installing glow"
+        local glow_version glow_tmp
+        glow_version="$(curl -s https://api.github.com/repos/charmbracelet/glow/releases/latest \
+            | grep '"tag_name"' | cut -d '"' -f4)"
+        glow_tmp="$(mktemp -d)"
+        curl -sL "https://github.com/charmbracelet/glow/releases/download/${glow_version}/glow_Linux_x86_64.tar.gz" \
+            -o "${glow_tmp}/glow.tar.gz"
+        tar -xzf "${glow_tmp}/glow.tar.gz" -C "${glow_tmp}"
+        sudo install -m 755 "${glow_tmp}/glow" /usr/local/bin/glow
+        rm -rf "${glow_tmp}"
+    fi
+
     # doom emacs
     if ! command -v doom &>/dev/null; then
         print_info "Installing doom emacs"
