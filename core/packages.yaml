@@ -2,7 +2,6 @@ packages:
   - firefox
   - foot
   - thunderbird
-  - bitwarden
   - cmake
   - dmidecode
   - docker
@@ -36,6 +35,7 @@ packages:
   - bitwarden
   - bat
   - direnv
+  - glow
   - eza
   - mise
   - uv
@@ -107,6 +107,7 @@ exceptions:
     - qemu: qemu-system-x86
     - thunderbird: skip       # installed separately via Mozilla APT repo
     - virt-install: virtinst
+    - glow: skip              # installed via binary release in _install_binaries
     - mise: skip              # installed via installer script in _install_binaries
     - uv: skip                # installed via installer script in _install_binaries
     - yazi: skip              # installed via binary release in _install_binaries

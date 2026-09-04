@@ -1,0 +1,83 @@
+packages:
+  - bat
+  - bc
+  - btop
+  - cava
+  - cmake
+  - cloudflared
+  - curl
+  - diffutils    # GNU diff/cmp/sdiff — not keg-only, shadows BSD diff via plain PATH
+  - direnv
+  - emacs
+  - eza
+  - fastfetch
+  - fd
+  - ffmpeg
+  - fzf
+  - git-delta
+  - glow
+  - gnupg
+  - go
+  - graphviz
+  - imagemagick
+  - jq
+  - kubectl
+  - meson
+  - mise
+  - mpc
+  - mpd
+  - ncmpcpp
+  - ncspot
+  - nodejs
+  - openssl
+  - pandoc
+  - pinentry
+  - python
+  - ripgrep
+  - rsync
+  - shellcheck
+  - stow
+  - tmux
+  - unzip
+  - uv
+  - vim
+  - wget
+  - wireguard-tools
+  - yazi
+  - yq
+  - zoxide
+  - zsh
+  - dnsmasq
+  - qemu
+  - macmon
+  - mpv          # formula, not the deprecated stolendata-mpv cask
+  # dev toolchain
+  - pnpm
+  - sqlc
+  - golangci-lint
+  - gettext
+  - postgresql@17
+  - postgis
+  - osmium-tool
+  - pmtiles
+  - okta-aws-cli
+
+casks:
+  - 1password
+  - aerospace
+  - bitwarden
+  - docker
+  - firefox
+  - ghostty
+  - karabiner-elements
+  - pgadmin4
+  - raycast        # app launcher, bound to aerospace's alt-d
+  - thunderbird
+
+exceptions:
+  macos:
+    - nodejs: node
+    - openssl: openssl@3
+    - pinentry: pinentry-mac
+    - python: python3
+    - git-delta: git-delta

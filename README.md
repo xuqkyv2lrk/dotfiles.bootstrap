@@ -11,6 +11,7 @@
   <a href="https://archlinux.org"><img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=fff&style=flat" alt="Arch Linux" /></a>
   <a href="https://ubuntu.com"><img src="https://img.shields.io/badge/Ubuntu-E95420?style=flat&logo=ubuntu&logoColor=white" alt="Ubuntu" /></a>
   <a href="https://nixos.org"><img src="https://img.shields.io/badge/NixOS-5277C3?logo=nixos&logoColor=white&style=flat" alt="NixOS" /></a>
+  <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/macOS-555555?style=flat&logo=apple&logoColor=white" alt="macOS" /></a>
 </p>
 </div>
 
@@ -26,7 +27,7 @@ The other repos are config only:
 | Repo | Purpose |
 |------|---------|
 | [dotfiles.core](https://gitlab.com/wd2nf8gqct/dotfiles.core) | Program configs (zsh, vim, tmux, etc.) — stow to wire |
-| [dotfiles.di](https://gitlab.com/wd2nf8gqct/dotfiles.di) | Desktop interface configs (Hyprland, Niri, Sway, GNOME) — stow to wire |
+| [dotfiles.di](https://gitlab.com/wd2nf8gqct/dotfiles.di) | Desktop interface configs (Hyprland, Niri, Sway, GNOME, macOS) — stow to wire |
 | [dotfiles.nix](https://gitlab.com/wd2nf8gqct/dotfiles.nix) | NixOS system config + Home Manager — self-contained |
 | **dotfiles.bootstrap** (this repo) | Orchestration — detects, installs, clones, wires |
 
@@ -62,6 +63,27 @@ Available choices depend on distro:
 shell layer across all Wayland compositors — it handles the bar, launcher,
 notifications, lock screen, session, screenshots, and wallpapers.
 
+### macOS (Apple Silicon)
+
+```bash
+git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git ~/.dotfiles.bootstrap
+cd ~/.dotfiles.bootstrap
+./bootstrap.sh
+```
+
+Bootstrap detects macOS, installs Homebrew, installs packages via brew, clones
+dotfiles.core and dotfiles.di, and wires both via stow. Third-party taps are
+trusted via `brew trust` (Homebrew 6 skips untrusted taps), and casks install
+with `HOMEBREW_CASK_OPTS=--no-quarantine` so apps launch without the Gatekeeper
+prompt. A dev toolchain (pnpm, sqlc, golangci-lint, PostGIS, PostgreSQL, Atlas,
+mockgen, plus the `hashicorp/tap` tap) is installed alongside the base packages.
+
+macOS-only shell setup that dotfiles.core doesn't provide — `brew shellenv` on
+PATH, GNU userland ahead of the BSD tools, and the `HOMEBREW_*` toggles — is
+written to a managed block in `~/.zprofile` (dotfiles.core stows `~/.zshenv`
+and `~/.zshrc`, so writing there would be clobbered on the next stow).
+Re-running `./bootstrap.sh` is safe and is the way to resume an interrupted run.
+
 ### NixOS
 
 Bootstrap runs from the **NixOS installer ISO** — not after first boot. Partition,
@@ -84,23 +106,7 @@ full disk setup walkthrough.
 
 ## Repository layout
 
-```
-.
-├── bootstrap.sh          # entry point — detect, clone, orchestrate
-├── lib/
-│   └── common.sh         # shared utilities: colors, distro/hardware detection,
-│                         #   package installation helpers
-├── core/
-│   ├── install.sh        # installs core packages, wires dotfiles.core via stow
-│   ├── packages.yaml     # package list with distro-specific exceptions
-│   └── system_components/
-│       └── xps_13_9350/  # hardware-specific assets (e.g. firmware files)
-├── di/
-│   ├── install.sh        # installs DE packages, wires dotfiles.di via stow
-│   └── packages.yaml     # DE package list with distro-specific exceptions
-└── nix/
-    └── install.sh        # NixOS path — clone dotfiles.nix, nixos-rebuild
-```
+`bootstrap.sh` is the entry point — it detects the distro and delegates to the appropriate installer under `core/`, `di/`, `macos/`, or `nix/`. `lib/common.sh` provides shared utilities (colors, distro and hardware detection, package installation helpers) used by all installers.
 
 ## License
 

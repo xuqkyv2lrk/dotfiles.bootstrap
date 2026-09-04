@@ -21,8 +21,13 @@ function print_step()    { printf "${MAUVE}==>${RESET} %s\n" "$*"; }
 function print_dry_run() { printf "${TEAL}[DRY-RUN]${RESET} %s\n" "$*"; }
 
 # detect_distro
-# Returns: arch | ubuntu | nixos | unsupported | unknown
+# Returns: arch | ubuntu | nixos | macos | unsupported | unknown
 function detect_distro() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        printf "macos"
+        return
+    fi
+
     if [[ ! -f "/etc/os-release" ]]; then
         printf "unknown"
         return
@@ -68,8 +73,13 @@ function detect_gpu() {
 }
 
 # detect_hardware
-# Returns: ThinkPad T480s | ROG | XPS 13 9350 | unknown
+# Returns: ThinkPad T480s | ROG | XPS 13 9350 | Apple Silicon | unknown
 function detect_hardware() {
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        printf "Apple Silicon"
+        return
+    fi
+
     local system_version="" system_product=""
 
     # Prefer sysfs — always available, no dmidecode needed (critical on NixOS installer ISO)
@@ -146,6 +156,15 @@ function install_package() {
                 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ${package}
             fi
             ;;
+        macos)
+            if ! brew list "${package}" &>/dev/null 2>&1; then
+                print_info "Installing ${package}"
+                # A single flaky download shouldn't abort the whole bootstrap;
+                # re-running picks up whatever is still missing.
+                brew install "${package}" \
+                    || print_warning "Failed to install ${package} — re-run bootstrap"
+            fi
+            ;;
         *)
             print_error "install_package: unsupported distro: ${distro}"
             return 1
@@ -160,6 +179,20 @@ function install_package() {
 function get_packages() {
     local packages_yaml="${1}"
     yq '.packages[]' "${packages_yaml}"
+}
+
+# secure_gnupg_permissions
+# GnuPG requires its homedir at 0700 (it holds private keys). dotfiles.core
+# tracks the gnupg config as a real directory (gnupg/.gnupg) that stow
+# symlinks to ~/.gnupg — but git doesn't preserve directory permission bits,
+# so a fresh clone lands at whatever the umask gives it (usually 0755).
+# Result: gpg-agent prints "WARNING: unsafe permissions on homedir" and
+# pinentry/signing can misbehave. `chmod` follows the ~/.gnupg symlink to the
+# real directory, so this is safe to call on every OS. Call after stowing
+# dotfiles.core (whichever _stow_core wired ~/.gnupg into place).
+function secure_gnupg_permissions() {
+    [[ -d "${HOME}/.gnupg" ]] || return
+    chmod 700 "${HOME}/.gnupg"
 }
 
 # find_systemd_boot_entries
@@ -237,6 +270,7 @@ function system_update() {
     case "${distro}" in
         arch)   sudo pacman -Syu --noconfirm ;;
         ubuntu) sudo apt-get update && sudo apt-get upgrade -y --allow-downgrades ;;
+        macos)  brew update && brew upgrade ;;
         *)
             print_error "system_update: unsupported distro: ${distro}"
             return 1
