@@ -159,7 +159,10 @@ function install_package() {
         macos)
             if ! brew list "${package}" &>/dev/null 2>&1; then
                 print_info "Installing ${package}"
-                brew install "${package}"
+                # A single flaky download shouldn't abort the whole bootstrap;
+                # re-running picks up whatever is still missing.
+                brew install "${package}" \
+                    || print_warning "Failed to install ${package} — re-run bootstrap"
             fi
             ;;
         *)
@@ -176,6 +179,20 @@ function install_package() {
 function get_packages() {
     local packages_yaml="${1}"
     yq '.packages[]' "${packages_yaml}"
+}
+
+# secure_gnupg_permissions
+# GnuPG requires its homedir at 0700 (it holds private keys). dotfiles.core
+# tracks the gnupg config as a real directory (gnupg/.gnupg) that stow
+# symlinks to ~/.gnupg — but git doesn't preserve directory permission bits,
+# so a fresh clone lands at whatever the umask gives it (usually 0755).
+# Result: gpg-agent prints "WARNING: unsafe permissions on homedir" and
+# pinentry/signing can misbehave. `chmod` follows the ~/.gnupg symlink to the
+# real directory, so this is safe to call on every OS. Call after stowing
+# dotfiles.core (whichever _stow_core wired ~/.gnupg into place).
+function secure_gnupg_permissions() {
+    [[ -d "${HOME}/.gnupg" ]] || return
+    chmod 700 "${HOME}/.gnupg"
 }
 
 # find_systemd_boot_entries

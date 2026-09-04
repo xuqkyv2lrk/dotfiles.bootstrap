@@ -291,6 +291,23 @@ function _install_binaries() {
         rm -rf /tmp/awscliv2.zip /tmp/aws-install
     fi
 
+    # okta-aws-cli — Okta as the IdP for AWS CLI federated auth. Not in the
+    # Arch/AUR or apt repos, so pull the official Linux binary release
+    # (macOS gets it via the okta-aws-cli brew formula in packages.yaml).
+    if ! command -v okta-aws-cli &>/dev/null; then
+        print_info "Installing okta-aws-cli"
+        local okta_tag okta_version okta_tmp
+        okta_tag="$(curl -s https://api.github.com/repos/okta/okta-aws-cli/releases/latest \
+            | grep '"tag_name"' | cut -d '"' -f4)"
+        okta_version="${okta_tag#v}"
+        okta_tmp="$(mktemp -d)"
+        curl -sL "https://github.com/okta/okta-aws-cli/releases/download/${okta_tag}/okta-aws-cli_${okta_version}_linux_amd64.tar.gz" \
+            -o "${okta_tmp}/okta-aws-cli.tar.gz"
+        tar -xzf "${okta_tmp}/okta-aws-cli.tar.gz" -C "${okta_tmp}"
+        sudo install -m 755 "${okta_tmp}/okta-aws-cli" /usr/local/bin/okta-aws-cli
+        rm -rf "${okta_tmp}"
+    fi
+
     # dyff
     if ! command -v dyff &>/dev/null; then
         print_info "Installing dyff"
@@ -649,6 +666,7 @@ function _stow_core() {
     git restore */
 
     cd - >/dev/null
+    secure_gnupg_permissions
     print_success "dotfiles.core wired"
 }
 
