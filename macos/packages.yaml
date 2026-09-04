@@ -6,6 +6,7 @@ packages:
   - cmake
   - cloudflared
   - curl
+  - diffutils    # GNU diff/cmp/sdiff — not keg-only, shadows BSD diff via plain PATH
   - direnv
   - emacs
   - eza
@@ -47,11 +48,19 @@ packages:
   - zoxide
   - zsh
   - dnsmasq
-  - gnupg
   - qemu
   - macmon
-  - sketchybar
-  - borders
+  - mpv          # formula, not the deprecated stolendata-mpv cask
+  # dev toolchain
+  - pnpm
+  - sqlc
+  - golangci-lint
+  - gettext
+  - postgresql@17
+  - postgis
+  - osmium-tool
+  - pmtiles
+  - okta-aws-cli
 
 casks:
   - 1password
@@ -61,7 +70,8 @@ casks:
   - firefox
   - ghostty
   - karabiner-elements
-  - mpv
+  - pgadmin4
+  - raycast        # app launcher, bound to aerospace's alt-d
   - thunderbird
 
 exceptions:
