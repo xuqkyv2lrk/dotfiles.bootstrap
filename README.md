@@ -72,7 +72,17 @@ cd ~/.dotfiles.bootstrap
 ```
 
 Bootstrap detects macOS, installs Homebrew, installs packages via brew, clones
-dotfiles.core and dotfiles.di, and wires both via stow.
+dotfiles.core and dotfiles.di, and wires both via stow. Third-party taps are
+trusted via `brew trust` (Homebrew 6 skips untrusted taps), and casks install
+with `HOMEBREW_CASK_OPTS=--no-quarantine` so apps launch without the Gatekeeper
+prompt. A dev toolchain (pnpm, sqlc, golangci-lint, PostGIS, PostgreSQL, Atlas,
+mockgen, plus the `hashicorp/tap` tap) is installed alongside the base packages.
+
+macOS-only shell setup that dotfiles.core doesn't provide — `brew shellenv` on
+PATH, GNU userland ahead of the BSD tools, and the `HOMEBREW_*` toggles — is
+written to a managed block in `~/.zprofile` (dotfiles.core stows `~/.zshenv`
+and `~/.zshrc`, so writing there would be clobbered on the next stow).
+Re-running `./bootstrap.sh` is safe and is the way to resume an interrupted run.
 
 ### NixOS
 
