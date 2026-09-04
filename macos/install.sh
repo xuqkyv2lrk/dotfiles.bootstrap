@@ -329,17 +329,19 @@ function _brew_install_cask() {
 }
 
 # _install_macos_packages
-# Installs brew formulas and casks from macos/packages.yaml.
+# Installs brew formulas and casks from macos/packages.yaml. Unlike
+# core/packages.yaml (shared across arch/ubuntu/nixos, each with its own
+# package manager and naming), this file only ever feeds Homebrew — so it
+# lists real brew formula names directly and skips the exceptions/
+# get_package_name indirection entirely.
 function _install_macos_packages() {
     print_step "Installing macOS packages"
 
-    local package package_name
+    local package
     while IFS= read -r package; do
         [[ -z "${package}" ]] && continue
         _should_skip_package "${package}" && continue
-        package_name="$(get_package_name "${package}" "macos" "${MACOS_PACKAGES_YAML}")"
-        [[ "${package_name}" == "skip" ]] && continue
-        install_package "${package_name}" "macos"
+        install_package "${package}" "macos"
     done < <(yq '.packages[]' "${MACOS_PACKAGES_YAML}")
 
     if [[ "${MINIMAL_MODE}" != "true" ]]; then

@@ -28,11 +28,11 @@ packages:
   - mpd
   - ncmpcpp
   - ncspot
-  - nodejs
-  - openssl
+  - node
+  - openssl@3
   - pandoc
-  - pinentry
-  - python
+  - pinentry-mac
+  - python3
   - ripgrep
   - rsync
   - shellcheck
@@ -73,11 +73,3 @@ casks:
   - pgadmin4
   - raycast        # app launcher, bound to aerospace's alt-d
   - thunderbird
-
-exceptions:
-  macos:
-    - nodejs: node
-    - openssl: openssl@3
-    - pinentry: pinentry-mac
-    - python: python3
-    - git-delta: git-delta
