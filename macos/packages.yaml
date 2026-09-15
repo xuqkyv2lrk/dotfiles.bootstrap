@@ -70,6 +70,7 @@ casks:
   - firefox
   - ghostty
   - karabiner-elements
+  - notificationnanny  # chessper53/notificationnanny tap, see _setup_taps
   - pgadmin4
   - raycast        # app launcher, bound to aerospace's alt-d
   - thunderbird

@@ -171,6 +171,17 @@ function _setup_taps() {
             brew trust "${tap}" || print_warning "Failed to trust ${tap}"
         fi
     done
+
+    # chessper53/notificationnanny isn't named homebrew-<repo>, so the tap
+    # needs its GitHub URL spelled out explicitly. Trusting the bare tap name
+    # is not enough to pass the tap-time cask audit — Homebrew only accepts
+    # the audit once the cask's own three-part token is pre-trusted, so that
+    # has to happen before `brew tap` runs or the whole tap gets rolled back.
+    if [[ "${trust_supported}" == "true" ]]; then
+        brew trust --cask chessper53/notificationnanny/notificationnanny \
+            || print_warning "Failed to trust chessper53/notificationnanny/notificationnanny"
+    fi
+    brew tap chessper53/notificationnanny https://github.com/chessper53/NotificationNanny
 }
 
 # _install_gnu_tools
