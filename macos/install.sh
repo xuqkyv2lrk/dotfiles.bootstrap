@@ -414,7 +414,11 @@ function _install_binaries_macos() {
     install_package "tfenv"       "macos"
     install_package "sops"        "macos"
     install_package "helm"        "macos"
-    install_package "flux"        "macos"
+    # Tap-qualified: the unqualified "flux" name is ambiguous with
+    # homebrew-core's InfluxData Flux (a database query language) — without
+    # the fluxcd/tap/ prefix brew installs the wrong "flux" binary even
+    # though fluxcd/tap is tapped in _setup_taps.
+    install_package "fluxcd/tap/flux" "macos"
     install_package "talosctl"    "macos"
 
     # doom emacs — guard on the actual binary, not $PATH, and clear a partial
