@@ -308,6 +308,12 @@ function _install_binaries() {
         rm -rf "${okta_tmp}"
     fi
 
+    # claude-code — native installer self-updates into ~/.local, unlike distro packages
+    if ! command -v claude &>/dev/null; then
+        print_info "Installing claude-code"
+        curl -fsSL https://claude.ai/install.sh | bash
+    fi
+
     # dyff
     if ! command -v dyff &>/dev/null; then
         print_info "Installing dyff"
