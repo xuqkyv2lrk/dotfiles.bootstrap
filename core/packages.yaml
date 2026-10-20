@@ -45,6 +45,8 @@ packages:
   - git-delta
   - btop
   - jq
+  - lm_sensors
+  - power-profiles-daemon
   - ripgrep
   - stow
   - unzip
@@ -94,6 +96,7 @@ exceptions:
     - gcc-c++: g++
     - go: golang-go
     - libvirt: libvirt-daemon-system libvirt-clients
+    - lm_sensors: lm-sensors
     - ncspot: skip
     - noto-fonts: fonts-noto
     - noto-fonts-cjk: fonts-noto-cjk

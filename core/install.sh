@@ -643,7 +643,11 @@ function _configure_rog() {
 
     sudo pacman -S --noconfirm asusctl supergfxctl rog-control-center
     sudo systemctl enable asusd
-    sudo systemctl enable supergfxd
+    sudo systemctl enable --now supergfxd
+    sudo systemctl enable power-profiles-daemon
+
+    # Hybrid lets the dGPU power down; the MUX mode keeps it on and needs a reboot to change
+    sudo supergfxctl -m Hybrid || print_warning "Could not set supergfxd mode to Hybrid"
     print_success "ROG packages installed"
 }
 
