@@ -1024,8 +1024,30 @@ function _configure_di_hardware() {
     local hardware="${1}"
     case "${hardware}" in
         "ThinkPad T480s") _configure_thinkpad_t480s ;;
+        "ROG") _configure_rog_niri_render ;;
         *) ;;
     esac
+}
+
+# _configure_rog_niri_render
+# The shared niri config pins rendering to renderD128, which is the dGPU on ROG
+# hybrid laptops and keeps it awake. Point the gitignored local.kdl at the
+# boot_vga device (the iGPU in Hybrid) via by-path, since renderD numbering can swap.
+function _configure_rog_niri_render() {
+    local local_kdl="${DI_DIR}/niri/niri/.config/niri/local.kdl"
+
+    [[ -d "$(dirname "${local_kdl}")" ]] || return
+    [[ -z "$(grep -s "render-drm-device" "${local_kdl}")" ]] || return
+
+    local dev
+    for dev in /sys/bus/pci/devices/*; do
+        if [[ "$(cat "${dev}/boot_vga" 2>/dev/null)" == "1" ]]; then
+            printf '\ndebug {\n    render-drm-device "/dev/dri/by-path/pci-%s-render"\n}\n' \
+                "$(basename "${dev}")" >> "${local_kdl}"
+            print_info "ROG: niri renders on the boot_vga GPU so the dGPU can suspend"
+            return
+        fi
+    done
 }
 
 # _configure_thinkpad_t480s
