@@ -39,6 +39,7 @@ function install_core() {
     _install_tmux_plugins
     _create_nm_dispatcher
     _configure_hardware "${hardware}" "${distro}"
+    _configure_laptop_power
     _configure_uv1_audio
     _configure_sleep_state "${distro}"
     _post_install "${distro}"
@@ -612,6 +613,23 @@ function _configure_hardware() {
     esac
 }
 
+# _configure_laptop_power
+# On machines with a battery, enables power-profiles-daemon and switches the
+# profile on AC changes: performance on AC, power-saver on battery. Matches any
+# mains supply since the AC node name differs per vendor.
+function _configure_laptop_power() {
+    [[ -n "$(compgen -G "/sys/class/power_supply/BAT*")" ]] || return
+
+    print_step "Configuring laptop power profiles"
+    sudo systemctl enable --now power-profiles-daemon
+
+    sudo tee /etc/udev/rules.d/90-power-profile.rules >/dev/null <<'EOF'
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="1", RUN+="/usr/bin/powerprofilesctl set performance"
+SUBSYSTEM=="power_supply", ATTR{type}=="Mains", ATTR{online}=="0", RUN+="/usr/bin/powerprofilesctl set power-saver"
+EOF
+    sudo udevadm control --reload
+}
+
 function _configure_thinkpad_t480s() {
     print_info "Applying ThinkPad T480s config — disabling IR camera"
     sudo tee /etc/udev/rules.d/80-lenovo-ir-camera.rules >/dev/null <<'EOF'
@@ -644,7 +662,6 @@ function _configure_rog() {
     sudo pacman -S --noconfirm asusctl supergfxctl rog-control-center
     sudo systemctl enable asusd
     sudo systemctl enable --now supergfxd
-    sudo systemctl enable power-profiles-daemon
 
     # Hybrid lets the dGPU power down; the MUX mode keeps it on and needs a reboot to change
     sudo supergfxctl -m Hybrid || print_warning "Could not set supergfxd mode to Hybrid"
