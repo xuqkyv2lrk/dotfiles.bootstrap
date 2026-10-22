@@ -104,7 +104,7 @@ function _select_de() {
                     print_step "Please select a desktop interface:"
                     local options
                     mapfile -t options < <(yq -e '.desktop_packages | keys | .[]' \
-                        "${DI_PACKAGES_YAML}" 2>/dev/null | tr -d '"' | grep -v '^quickshell$')
+                        "${DI_PACKAGES_YAML}" 2>/dev/null | tr -d '"' | grep -v '^noctalia$')
                     select de in "${options[@]}"; do
                         if [[ -n "${de}" ]]; then
                             _de_result="${de}"
@@ -268,7 +268,7 @@ function _install_di_packages() {
 }
 
 # _install_desktop_packages
-# Installs DE-specific packages and Noctalia/Quickshell packages.
+# Installs DE-specific packages and the Noctalia packages.
 # Parameters:
 #   $1 - distro (arch | ubuntu)
 #   $2 - desktop interface
@@ -291,23 +291,23 @@ function _install_desktop_packages() {
         install_package "${pkg_name}" "${distro}"
     done
 
-    # Quickshell packages are only relevant for non-GNOME DEs
+    # Noctalia packages are only relevant for non-GNOME DEs
     if [[ "${desktop_interface}" != "gnome" ]]; then
-        local qs_packages qs_pkg qs_pkg_name
-        mapfile -t qs_packages < <(yq -e ".desktop_packages.quickshell[]" \
+        local noctalia_packages noctalia_pkg noctalia_pkg_name
+        mapfile -t noctalia_packages < <(yq -e ".desktop_packages.noctalia[]" \
             "${DI_PACKAGES_YAML}" 2>/dev/null)
-        qs_packages=("${qs_packages[@]//\"/}")
-        for qs_pkg in "${qs_packages[@]}"; do
-            qs_pkg_name="$(get_package_name "${qs_pkg}" "${distro}" "${DI_PACKAGES_YAML}")"
-            qs_pkg_name="${qs_pkg_name//\"/}"
-            [[ "${qs_pkg_name}" == "skip" ]] && continue
-            install_package "${qs_pkg_name}" "${distro}"
+        noctalia_packages=("${noctalia_packages[@]//\"/}")
+        for noctalia_pkg in "${noctalia_packages[@]}"; do
+            noctalia_pkg_name="$(get_package_name "${noctalia_pkg}" "${distro}" "${DI_PACKAGES_YAML}")"
+            noctalia_pkg_name="${noctalia_pkg_name//\"/}"
+            [[ "${noctalia_pkg_name}" == "skip" ]] && continue
+            install_package "${noctalia_pkg_name}" "${distro}"
         done
     fi
 }
 
 # _stow_di
-# Wires dotfiles.di into $HOME via stow, filtering Quickshell-replaced packages.
+# Wires dotfiles.di into $HOME via stow, wiring the Noctalia config package.
 # Parameters:
 #   $1 - distro (arch | ubuntu)
 #   $2 - desktop interface
@@ -331,12 +331,10 @@ function _stow_di() {
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
-        print_info "Wiring quickshell configs"
-        [[ -d "${DI_DIR}/quickshell/quickshell" ]] && \
-            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" quickshell
-        [[ -d "${DI_DIR}/quickshell/noctalia-shell" ]] && \
-            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/quickshell" noctalia
-        git -C "${DI_DIR}/quickshell" restore */ 2>/dev/null || true
+        print_info "Wiring noctalia config"
+        [[ -d "${DI_DIR}/noctalia/noctalia" ]] && \
+            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/noctalia" noctalia
+        git -C "${DI_DIR}/noctalia" restore */ 2>/dev/null || true
     fi
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
@@ -392,7 +390,7 @@ function _generate_autostart() {
         esac
 
         printf '\n# Shell\n'
-        printf 'qs -p %s/quickshell/noctalia-shell &\n' "${DI_DIR}"
+        printf 'noctalia &\n'
     } > "${script}"
 
     chmod +x "${script}"
@@ -820,13 +818,13 @@ function _install_niri_from_ppa_ubuntu() {
 }
 
 # _install_noctalia_ubuntu
-# Installs noctalia-shell (includes the quickshell runtime) from the official
-# apt repo. Requires Ubuntu 25.04+ (Qt6 >= 6.6). Warns and skips on 24.04.
+# Installs noctalia from the official apt repo. Requires Ubuntu 25.04+.
+# Warns and skips on 24.04.
 # On 26.04+ uses the questing build (Qt6 6.9) as a best-effort fallback until
 # an official 26.04 build is published.
 function _install_noctalia_ubuntu() {
-    if command -v qs &>/dev/null; then
-        print_info "noctalia-shell already installed, skipping"
+    if command -v noctalia &>/dev/null; then
+        print_info "noctalia already installed, skipping"
         return
     fi
 
@@ -844,13 +842,13 @@ function _install_noctalia_ubuntu() {
                 noctalia_codename="sid"
                 print_warning "No explicit noctalia build for ${codename} — using sid (Qt6 6.10)"
             else
-                print_warning "noctalia-shell requires Ubuntu 25.04+. Detected: ${codename}. Skipping."
+                print_warning "noctalia requires Ubuntu 25.04+. Detected: ${codename}. Skipping."
                 return
             fi
             ;;
     esac
 
-    print_info "Installing noctalia-shell (${noctalia_codename})"
+    print_info "Installing noctalia (${noctalia_codename})"
     sudo mkdir -p /etc/apt/keyrings
     curl -fsSL https://pkg.noctalia.dev/gpg.key \
         | sudo gpg --dearmor -o /etc/apt/keyrings/noctalia.gpg
@@ -858,7 +856,7 @@ function _install_noctalia_ubuntu() {
         "${noctalia_codename}" \
         | sudo tee /etc/apt/sources.list.d/noctalia.list >/dev/null
     sudo apt-get update -y
-    sudo apt-get install -y noctalia-shell
+    sudo apt-get install -y noctalia
 }
 
 # _install_niri_stack_ubuntu
@@ -1257,16 +1255,15 @@ function _install_media_inhibit_service() {
 #!/usr/bin/env bash
 set -euo pipefail
 
-qs_shell="$HOME/.dotfiles.di/quickshell/noctalia-shell"
 inhibited=false
 
 while true; do
     status="$(playerctl status 2>/dev/null || printf "Stopped")"
     if [[ "$status" == "Playing" ]] && [[ "$inhibited" == "false" ]]; then
-        qs ipc --any-display -p "$qs_shell" call idleInhibitor enable 2>/dev/null || true
+        noctalia msg caffeine-enable 2>/dev/null || true
         inhibited=true
     elif [[ "$status" != "Playing" ]] && [[ "$inhibited" == "true" ]]; then
-        qs ipc --any-display -p "$qs_shell" call idleInhibitor disable 2>/dev/null || true
+        noctalia msg caffeine-disable 2>/dev/null || true
         inhibited=false
     fi
     sleep 5
@@ -1296,47 +1293,35 @@ EOF_UNIT
     print_success "noctalia-media-inhibit service installed"
 }
 
-function _install_noctalia_wifi_refresh() {
-    local hook_src="${SCRIPT_DIR}/di/system-sleep/noctalia-wifi-refresh"
-    local hook_dst="/usr/lib/systemd/system-sleep/noctalia-wifi-refresh"
-    sudo install -m 755 "${hook_src}" "${hook_dst}"
-    print_success "WiFi resume hook installed"
+# Writes the per-machine bar logo override for the host distro.
+function _write_noctalia_logo() {
+    local local_toml="${HOME}/.config/noctalia/local.toml"
+    local distro_id logo
+
+    [[ -f "${local_toml}" ]] && return
+    distro_id="$(. /etc/os-release && printf '%s' "${ID}")"
+    logo="${HOME}/.config/noctalia/logos/${distro_id}.svg"
+    [[ -f "${logo}" ]] || return 0
+
+    printf '# per-machine overrides, not tracked\n[widget.sep]\ncustom_image = "~/.config/noctalia/logos/%s.svg"\ncustom_image_colorize = true\n' \
+        "${distro_id}" > "${local_toml}"
+    print_success "Noctalia logo set to ${distro_id}"
 }
 
-function _install_lock_before_suspend() {
-    local qs_bin
-    qs_bin="$(command -v qs || command -v quickshell)"
-
-    sudo tee /etc/systemd/system/lock-before-suspend.service > /dev/null <<'EOF_UNIT'
-[Unit]
-Description=Lock noctalia screen before suspend
-Before=sleep.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c '\
-  user=$(loginctl list-sessions --no-legend | awk "{print \$3}" | grep -v root | head -1); \
-  uid=$(id -u "$user"); \
-  home=$(getent passwd "$user" | cut -d: -f6); \
-  XDG_RUNTIME_DIR=/run/user/$uid QS_BIN ipc --any-display \
-    -p "$home/.dotfiles.di/quickshell/noctalia-shell" call lockScreen lock; \
-  sleep 1'
-TimeoutSec=15
-
-[Install]
-WantedBy=sleep.target
-EOF_UNIT
-
-    sudo sed -i "s|QS_BIN|${qs_bin}|g" /etc/systemd/system/lock-before-suspend.service
-    sudo systemctl daemon-reload
-    sudo systemctl enable lock-before-suspend.service
-    print_success "lock-before-suspend service installed"
+# Removes the v4 hooks left on machines bootstrapped before Noctalia v5.
+function _remove_noctalia_v4_hooks() {
+    if [[ -f /etc/systemd/system/lock-before-suspend.service ]]; then
+        sudo systemctl disable lock-before-suspend.service 2>/dev/null || true
+        sudo rm -f /etc/systemd/system/lock-before-suspend.service
+        sudo systemctl daemon-reload
+    fi
+    sudo rm -f /usr/lib/systemd/system-sleep/noctalia-wifi-refresh
 }
 
 function _configure_noctalia() {
-    _install_lock_before_suspend
+    _remove_noctalia_v4_hooks
     _install_media_inhibit_service
-    _install_noctalia_wifi_refresh
+    _write_noctalia_logo
 }
 
 function _configure_hyprland() {

@@ -128,12 +128,10 @@ desktop_packages:
     - xdg-desktop-portal-wlr
     - xorg-xwayland
 
-  quickshell:
-    - cava
+  noctalia:
     - cliphist
     - ddcutil
-    - noctalia-shell
-    - wlr-randr
+    - noctalia
 
 exceptions:
   arch:
@@ -153,7 +151,7 @@ exceptions:
     - papirus-folders-catppuccin-git: skip # built by install_niri_stack_ubuntu
     - pwvucontrol: skip                   # built by install_niri_stack_ubuntu
     - swappy: skip                        # not in Ubuntu 24.04 apt repos
-    - noctalia-shell: skip                # installed via apt repo in install_niri_stack_ubuntu
+    - noctalia: skip                      # installed via apt repo in install_niri_stack_ubuntu
     - libva-utils: vainfo
     - polkit: polkitd
     - nvidia-open-dkms: skip             # handled by ubuntu-drivers in configure_nvidia_for_niri
