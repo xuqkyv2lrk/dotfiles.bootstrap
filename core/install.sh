@@ -665,7 +665,34 @@ function _configure_rog() {
 
     # Hybrid lets the dGPU power down; the MUX mode keeps it on and needs a reboot to change
     sudo supergfxctl -m Hybrid || print_warning "Could not set supergfxd mode to Hybrid"
+    _install_rog_control_center_service
     print_success "ROG packages installed"
+}
+
+# Starts rog-control-center in the background once Noctalia's tray exists, because the app
+# registers its tray icon only at startup.
+function _install_rog_control_center_service() {
+    local unit_dir="${HOME}/.config/systemd/user"
+    mkdir -p "${unit_dir}"
+
+    cat > "${unit_dir}/rog-control-center.service" <<'EOF_UNIT'
+[Unit]
+Description=ROG Control Center (background, tray icon)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStartPre=/bin/bash -c 'for i in $(seq 30); do busctl --user status org.kde.StatusNotifierWatcher >/dev/null 2>&1 && exit 0; sleep 1; done'
+ExecStart=/usr/bin/rog-control-center --background
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+EOF_UNIT
+
+    systemctl --user daemon-reload 2>/dev/null || true
+    systemctl --user enable rog-control-center.service 2>/dev/null \
+        || print_warning "Could not enable rog-control-center.service; run it from a graphical session"
 }
 
 function _configure_xps_13_9350() {
