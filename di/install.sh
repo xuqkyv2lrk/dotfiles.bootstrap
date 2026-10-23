@@ -331,9 +331,11 @@ function _stow_di() {
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
+        # --no-folding keeps stow from linking the whole state directory (clipboard and
+        # notification history included) into the repo; only settings.toml is shared.
         print_info "Wiring noctalia config"
         [[ -d "${DI_DIR}/noctalia/noctalia" ]] && \
-            stow --adopt -v -t "${HOME}" -d "${DI_DIR}/noctalia" noctalia
+            stow --adopt --no-folding -v -t "${HOME}" -d "${DI_DIR}/noctalia" noctalia
         git -C "${DI_DIR}/noctalia" restore */ 2>/dev/null || true
     fi
 
