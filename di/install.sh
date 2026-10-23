@@ -337,6 +337,11 @@ function _stow_di() {
         [[ -d "${DI_DIR}/noctalia/noctalia" ]] && \
             stow --adopt --no-folding -v -t "${HOME}" -d "${DI_DIR}/noctalia" noctalia
         git -C "${DI_DIR}/noctalia" restore */ 2>/dev/null || true
+
+        # Keeps the bar logo centered as the clock text width changes with the date
+        systemctl --user daemon-reload 2>/dev/null || true
+        systemctl --user enable noctalia-center-logo.timer 2>/dev/null || \
+            print_warning "Enable the logo centering timer after login: systemctl --user enable --now noctalia-center-logo.timer"
     fi
 
     if [[ "${desktop_interface}" != "gnome" ]]; then
