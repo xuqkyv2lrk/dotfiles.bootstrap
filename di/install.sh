@@ -60,7 +60,7 @@ function _clone_di() {
 # _select_de
 # Prompts the user to select a desktop interface and DE-specific options.
 # Sets USE_PAPERWM as a side effect.
-# On Ubuntu, asks how to configure the existing GNOME or whether to install Niri.
+# On Ubuntu, asks how to configure the existing GNOME or whether to install Niri or Umbriel.
 # On Arch, presents the full DE list from packages.yaml.
 # Parameters:
 #   $1 - distro (arch | ubuntu)
@@ -78,7 +78,8 @@ function _select_de() {
     if [[ "${distro}" == "ubuntu" ]]; then
         print_step "How would you like to configure your desktop?"
         printf "${TEXT}Ubuntu includes GNOME by default.${RESET}\n"
-        select de in "Configure GNOME (+ optional PaperWM)" "Install Niri (Wayland compositor)" "Skip"; do
+        select de in "Configure GNOME (+ optional PaperWM)" "Install Niri (Wayland compositor)" \
+            "Install Umbriel (Wayland compositor, Ubuntu 26.04+)" "Skip"; do
             case "${de}" in
                 "Configure GNOME (+ optional PaperWM)")
                     _de_result="gnome"
@@ -87,6 +88,10 @@ function _select_de() {
                     ;;
                 "Install Niri (Wayland compositor)")
                     _de_result="niri"
+                    return
+                    ;;
+                "Install Umbriel (Wayland compositor, Ubuntu 26.04+)")
+                    _de_result="umbriel"
                     return
                     ;;
                 "Skip")
@@ -230,13 +235,22 @@ function _configure_pre_install() {
         gnome)
             mkdir -p "${HOME}/.local/share/gnome-shell"
             ;;
-        hyprland|niri|sway|river)
+        hyprland|niri|sway|river|umbriel)
             if [[ "${desktop_interface}" == "sway" ]]; then
                 print_info "Installing swaysome"
                 cargo install --locked --root "${HOME}" swaysome
             fi
             if [[ "${distro}" == "ubuntu" && "${desktop_interface}" == "niri" ]]; then
                 _install_niri_stack_ubuntu
+            fi
+            if [[ "${desktop_interface}" == "umbriel" ]]; then
+                if [[ "${distro}" == "ubuntu" ]]; then
+                    _install_umbriel_stack_ubuntu
+                else
+                    # umbriel-git is AUR-only, which install_package (pacman) cannot reach
+                    print_info "Installing umbriel-git"
+                    yay -S --noconfirm --needed umbriel-git
+                fi
             fi
             ;;
         *)
@@ -330,6 +344,12 @@ function _stow_di() {
     done
     git -C "${DI_DIR}/${desktop_interface}" restore */ 2>/dev/null || true
 
+    if [[ "${desktop_interface}" == "umbriel" ]]; then
+        print_info "Wiring niri's shared GTK, swappy and mimeapps packages"
+        stow --adopt -v -t "${HOME}" -d "${DI_DIR}/niri" gtk-3.0 gtk-4.0 swappy xdg
+        git -C "${DI_DIR}/niri" restore */ 2>/dev/null || true
+    fi
+
     if [[ "${desktop_interface}" != "gnome" ]]; then
         # --no-folding keeps stow from linking the whole state directory (clipboard and
         # notification history included) into the repo; only settings.toml is shared.
@@ -344,7 +364,7 @@ function _stow_di() {
             print_warning "Enable the logo centering timer after login: systemctl --user enable --now noctalia-center-logo.timer"
     fi
 
-    if [[ "${desktop_interface}" != "gnome" ]]; then
+    if [[ "${desktop_interface}" != "gnome" && "${desktop_interface}" != "umbriel" ]]; then
         local compositor_config_dir
         case "${desktop_interface}" in
             hyprland) compositor_config_dir="hypr" ;;
@@ -896,6 +916,47 @@ function _install_niri_stack_ubuntu() {
     print_success "niri stack installation complete"
 }
 
+# _install_umbriel_ubuntu
+# Installs umbriel from the NickH apt repo, which only builds for Ubuntu 26.04 (resolute).
+function _install_umbriel_ubuntu() {
+    if command -v umbriel &>/dev/null; then
+        print_info "umbriel already installed, skipping"
+        return
+    fi
+
+    local codename
+    codename="$(_ubuntu_codename)"
+    if [[ "${codename}" != "resolute" ]]; then
+        print_error "umbriel needs Ubuntu 26.04 (resolute). Detected: ${codename}"
+        exit 1
+    fi
+
+    print_info "Installing umbriel from the NickH apt repo"
+    local keyring_deb
+    keyring_deb="$(mktemp --suffix=.deb)"
+    curl -fsSL -o "${keyring_deb}" https://pkg.noctalia.dev/deb/nickh-archive-keyring.deb
+    sudo dpkg -i "${keyring_deb}"
+    rm -f "${keyring_deb}"
+    sudo curl -fsSL -o /etc/apt/sources.list.d/noctalia-resolute.sources \
+        https://pkg.noctalia.dev/deb/noctalia-resolute.sources
+    sudo apt-get update
+    sudo apt-get install -y umbriel
+    print_success "umbriel installed"
+}
+
+# _install_umbriel_stack_ubuntu
+# Installs umbriel plus the desktop tools it shares with the niri stack.
+function _install_umbriel_stack_ubuntu() {
+    print_step "Installing umbriel stack for Ubuntu 26.04"
+    _install_umbriel_ubuntu
+    _install_cliphist_ubuntu
+    _install_catppuccin_gtk_ubuntu
+    _install_papirus_catppuccin_ubuntu
+    _install_pwvucontrol_ubuntu
+    _install_noctalia_ubuntu
+    print_success "umbriel stack installation complete"
+}
+
 # ─── Display / Hardware ───────────────────────────────────────────────────────
 
 # _configure_display_wakeup
@@ -1109,6 +1170,7 @@ function _configure_desktop_interface() {
         gnome)    _configure_gnome "${distro}" "${scale_factor}" ;;
         hyprland) _configure_hyprland ;;
         niri)     _configure_niri ;;
+        umbriel)  _configure_umbriel ;;
         sway)     _configure_sway ;;
         river)    _configure_river ;;
         *)        print_error "Unsupported desktop interface: ${desktop_interface}" ;;
@@ -1338,6 +1400,10 @@ function _configure_hyprland() {
 function _configure_niri() {
     _configure_catppuccin_gtk
     _configure_display_wakeup
+}
+
+function _configure_umbriel() {
+    _configure_catppuccin_gtk
 }
 
 function _configure_sway() {

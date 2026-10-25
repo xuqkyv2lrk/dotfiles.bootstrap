@@ -128,6 +128,27 @@ desktop_packages:
     - xdg-desktop-portal-wlr
     - xorg-xwayland
 
+  umbriel:
+    - catppuccin-gtk-theme-mocha
+    - cliphist
+    - gnome-keyring
+    - gnome-themes-extra
+    - grim
+    - gtk-engine-murrine
+    - libva-utils
+    - nautilus
+    - pamixer
+    - papirus-folders-catppuccin-git
+    - papirus-icon-theme
+    - polkit
+    - polkit-gnome
+    - pwvucontrol
+    - slurp
+    - swappy
+    - wl-clipboard
+    - xdg-desktop-portal-gtk
+    - xorg-xwayland
+
   noctalia:
     - cliphist
     - ddcutil
@@ -157,5 +178,6 @@ exceptions:
     - nvidia-open-dkms: skip             # handled by ubuntu-drivers in configure_nvidia_for_niri
     - nvidia-utils: skip                 # handled by ubuntu-drivers in configure_nvidia_for_niri
     - libva-nvidia-driver: skip          # handled by ubuntu-drivers in configure_nvidia_for_niri
+    - xorg-xwayland: xwayland
 
 repositories:
