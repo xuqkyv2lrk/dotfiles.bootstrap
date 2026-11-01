@@ -40,8 +40,18 @@ With no checkout beside it, the script installs git if it is missing (through
 Running it again pulls the latest changes and resumes.
 
 ```bash
-bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
+bash <(curl -fsSL dots.ethi.cz/boot)
 ```
+
+Ubuntu desktop ships `wget` but not `curl`, so there use:
+
+```bash
+bash <(wget -qO- dots.ethi.cz/boot)
+```
+
+`dots.ethi.cz/boot` is a redirect to the raw script on GitLab. If it is ever
+unreachable, the direct URL works the same way:
+`https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh`
 
 Use `bash <(curl ...)` rather than `curl ... | bash`: the installers prompt for
 input, and a piped script would compete with those prompts for stdin. Options go
@@ -107,7 +117,7 @@ format, and mount the disk first, then:
 
 ```bash
 nixos-generate-config --root /mnt
-bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
+bash <(curl -fsSL dots.ethi.cz/boot)
 ```
 
 If the installer ISO has no git, bootstrap fetches it through `nix-shell` and
