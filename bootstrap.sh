@@ -4,6 +4,49 @@ set -euo pipefail
 # Bootstrap a new machine with dotfiles and system packages.
 # Detects distro and hardware, installs packages, clones and wires dotfiles.
 # Usage: bootstrap.sh [OPTIONS]
+#        bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
+
+readonly BOOTSTRAP_REPO="https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git"
+readonly BOOTSTRAP_CLONE_DIR="${BOOTSTRAP_CLONE_DIR:-/tmp/dotfiles.bootstrap}"
+
+# Run straight from curl there is no checkout beside this file, so fetch the repo and
+# hand over to its copy of the script. lib/common.sh is not loaded yet, hence the
+# inline colors.
+function self_bootstrap() {
+    local here
+    here="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || here=""
+    [[ -n "${here}" && -f "${here}/lib/common.sh" ]] && return 0
+
+    printf '\033[38;2;203;166;247m==>\033[0m %s\n' "No local checkout; fetching dotfiles.bootstrap"
+
+    local args=""
+    [[ $# -gt 0 ]] && args="$(printf ' %q' "$@")"
+    local fetch_and_run
+    fetch_and_run="if [[ -d '${BOOTSTRAP_CLONE_DIR}/.git' ]]; then"
+    fetch_and_run+=" git -C '${BOOTSTRAP_CLONE_DIR}' pull --ff-only;"
+    fetch_and_run+=" else git clone '${BOOTSTRAP_REPO}' '${BOOTSTRAP_CLONE_DIR}'; fi"
+    # Prompts must read the keyboard even when the script itself arrived on stdin
+    fetch_and_run+=" && exec bash '${BOOTSTRAP_CLONE_DIR}/bootstrap.sh'${args} < /dev/tty"
+
+    if command -v git >/dev/null; then
+        exec bash -c "${fetch_and_run}"
+    fi
+
+    # The NixOS installer has no git; nix/install.sh needs it too, so stay inside the shell
+    if command -v nix-shell >/dev/null; then
+        exec nix-shell -p git --run "${fetch_and_run}"
+    elif command -v pacman >/dev/null; then
+        sudo pacman -Sy --needed --noconfirm git
+    elif command -v apt-get >/dev/null; then
+        sudo apt-get update && sudo apt-get install -y git
+    else
+        printf '\033[38;2;243;139;168m[ERROR]\033[0m %s\n' "git is required; install it and re-run" >&2
+        exit 1
+    fi
+    exec bash -c "${fetch_and_run}"
+}
+
+self_bootstrap "$@"
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

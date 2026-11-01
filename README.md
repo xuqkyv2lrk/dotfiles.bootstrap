@@ -33,6 +33,22 @@ The other repos are config only:
 
 ## Usage
 
+On a fresh machine, bootstrap can run straight from GitLab without cloning first.
+With no checkout beside it, the script installs git if it is missing (through
+`nix-shell` on the NixOS installer), clones this repo to `/tmp/dotfiles.bootstrap`
+(set `BOOTSTRAP_CLONE_DIR` to change that), and hands over to the cloned copy.
+Running it again pulls the latest changes and resumes.
+
+```bash
+bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
+```
+
+Use `bash <(curl ...)` rather than `curl ... | bash`: the installers prompt for
+input, and a piped script would compete with those prompts for stdin. Options go
+after the closing parenthesis, for example `bash <(curl ...) --minimal`.
+
+Cloning manually works exactly as before, as shown per platform below.
+
 ### Arch / Ubuntu
 
 ```bash
@@ -91,10 +107,13 @@ format, and mount the disk first, then:
 
 ```bash
 nixos-generate-config --root /mnt
-git clone https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git /tmp/dotfiles.bootstrap
-cd /tmp/dotfiles.bootstrap
-./bootstrap.sh
+bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
 ```
+
+If the installer ISO has no git, bootstrap fetches it through `nix-shell` and
+stays inside that shell for the rest of the install. Run it as root (`sudo -i`
+first): `sudo bash <(curl ...)` does not work, because sudo closes the file
+descriptor that `<(...)` hands to bash.
 
 Bootstrap detects NixOS, clones dotfiles.nix, copies the hardware config, scaffolds
 a host config if the hostname is new (opening an editor to wire in the flake entry),
