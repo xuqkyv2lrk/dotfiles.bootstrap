@@ -4,7 +4,7 @@ set -euo pipefail
 # Bootstrap a new machine with dotfiles and system packages.
 # Detects distro and hardware, installs packages, clones and wires dotfiles.
 # Usage: bootstrap.sh [OPTIONS]
-#        bash <(curl -fsSL https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap/-/raw/main/bootstrap.sh)
+#        bash <(curl -fsSL dots.ethi.cz/boot)
 
 readonly BOOTSTRAP_REPO="https://gitlab.com/wd2nf8gqct/dotfiles.bootstrap.git"
 readonly BOOTSTRAP_CLONE_DIR="${BOOTSTRAP_CLONE_DIR:-/tmp/dotfiles.bootstrap}"
@@ -26,7 +26,10 @@ function self_bootstrap() {
     fetch_and_run+=" git -C '${BOOTSTRAP_CLONE_DIR}' pull --ff-only;"
     fetch_and_run+=" else git clone '${BOOTSTRAP_REPO}' '${BOOTSTRAP_CLONE_DIR}'; fi"
     # Prompts must read the keyboard even when the script itself arrived on stdin
-    fetch_and_run+=" && exec bash '${BOOTSTRAP_CLONE_DIR}/bootstrap.sh'${args} < /dev/tty"
+    # (curl | bash); only switch when stdin is not a terminal and /dev/tty can be opened
+    fetch_and_run+=" && if [[ ! -t 0 ]] && { : < /dev/tty; } 2>/dev/null; then"
+    fetch_and_run+=" exec bash '${BOOTSTRAP_CLONE_DIR}/bootstrap.sh'${args} < /dev/tty;"
+    fetch_and_run+=" else exec bash '${BOOTSTRAP_CLONE_DIR}/bootstrap.sh'${args}; fi"
 
     if command -v git >/dev/null; then
         exec bash -c "${fetch_and_run}"
@@ -36,7 +39,8 @@ function self_bootstrap() {
     if command -v nix-shell >/dev/null; then
         exec nix-shell -p git --run "${fetch_and_run}"
     elif command -v pacman >/dev/null; then
-        sudo pacman -Sy --needed --noconfirm git
+        # -Syu: refreshing the database without upgrading is an unsupported partial upgrade
+        sudo pacman -Syu --needed --noconfirm git
     elif command -v apt-get >/dev/null; then
         sudo apt-get update && sudo apt-get install -y git
     else
